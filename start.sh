@@ -16,6 +16,7 @@ podman run -d \
   --cap-add=NET_ADMIN \
   --device=/dev/net/tun \
   -h openvpnas \
+  -e TZ=Asia/Kolkata \
   -p 943:943/tcp \
   -p 1194:11194/tcp \
   -p 1194:11194/udp \
