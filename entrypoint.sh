@@ -8,6 +8,7 @@ if [[ ! -d /usr/local/openvpn_as ]]; then
 elif [[ $(wc -l < /usr/local/openvpn_as/etc/as.conf) -ne 0 ]]; then
         echo "Starting OpenVPN Server..."
         systemctl start openvpnas
+        sleep 10
         echo "Done"
 else
         echo "Fresh Installation..."
