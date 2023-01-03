@@ -1,0 +1,11 @@
+---
+- hosts: all
+  pre_tasks:
+  - set_fact:
+      # Oracle Linux 9
+      operating_system: "ol9"
+  roles:
+    - setup-instance
+    - {role: setup-openvpn-as, when: install == "all" or install == "openvpnas"}
+    - {role: setup-wireguard, when: install == "all" or install == "wireguard"}
+    - setup-cronjobs

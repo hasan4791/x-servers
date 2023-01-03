@@ -1,0 +1,31 @@
+---
+- name: Create config directory
+  file:
+    path: /root/x-servers/{{ item.name }}
+    state: directory
+  with_items:
+    - {name: '/root/x-servers/wg-data'}
+    - {name: '/root/x-servers/wg-data/config'}
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: Copy wireguard start script
+  template:
+    src: start.sh
+    dest: /root/x-servers/wg-data/start.sh
+    mode: 0744
+    owner: root
+    group: root
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: Start Wireguard Server
+  script: /root/x-servers/wg-data/start.sh
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"

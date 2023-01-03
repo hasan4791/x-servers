@@ -1,0 +1,89 @@
+---
+- name: Upgrade all packages
+  dnf:
+    name: "*"
+    state: latest
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: Install packages
+  dnf:
+    name: "{{ packages }}"
+    state: latest
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  vars:
+    packages:
+      - podman
+
+- name: Enable podman-restart service
+  systemd:
+    name: podman-restart
+    enabled: true
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: Update modules
+  copy:
+    src: files/x-server-modules.conf
+    dest: /etc/modules-load.d/x-server-modules.conf
+    owner: root
+    group: root
+    mode: 0644
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: install == "all" or install == "openvpnas"
+
+- name: Openvpn specific modules
+  lineinfile:
+    path: /etc/modules-load.d/x-server-modules.conf
+    line: 'tun'
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: install == "all" or install == "openvpnas"
+
+- name: Wireguard specific modules
+  lineinfile:
+    path: /etc/modules-load.d/x-server-modules.conf
+    line: 'wireguard'
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: install == "all" or install == "wireguard"
+
+- name: Update sysctl
+  copy:
+    src: files/podman-net.conf
+    dest: /etc/modules-load.d/podman-net.conf
+    owner: root
+    group: root
+    mode: 0644
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: Create working directory
+  file:
+    path: /root/x-servers
+    state: directory
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: Reboot server
+  reboot:
+    post_reboot_delay: 60
+    reboot_timeout: 300
