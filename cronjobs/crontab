@@ -1,0 +1,6 @@
+SHELL=/bin/bash
+MAILTO=root@example.com
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+
+#Update node & images
+0 0 * * 0 /root/x-servers/cronjobs/update-x-servers.sh
