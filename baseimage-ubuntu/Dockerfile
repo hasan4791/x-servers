@@ -35,7 +35,10 @@ RUN \
   echo "**** create xuser user and make our folders ****" && \
   useradd -u 911 -U -d /config -s /bin/false xuser && \
   usermod -G users xuser && \
-  mkdir -p /config
+  mkdir -p \
+    /config \
+    /app \
+    /defaults
 
 # copy s6 files from builder image
 COPY --from=builder /root/builder/ /
