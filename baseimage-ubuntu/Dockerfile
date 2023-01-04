@@ -1,0 +1,47 @@
+FROM busybox as builder
+
+# set version for s6 overlay
+ARG S6_OVERLAY_VERSION="3.1.2.1"
+ARG S6_OVERLAY_ARCH="x86_64"
+
+# add s6 overlay
+RUN mkdir -p /root/builder
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-noarch.tar.xz /tmp
+RUN tar -C /root/builder -Jxpf /tmp/s6-overlay-noarch.tar.xz
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-${S6_OVERLAY_ARCH}.tar.xz /tmp
+RUN tar -C /root/builder -Jxpf /tmp/s6-overlay-${S6_OVERLAY_ARCH}.tar.xz
+
+# add s6 optional symlinks
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-symlinks-noarch.tar.xz /tmp
+RUN tar -C /root/builder -Jxpf /tmp/s6-overlay-symlinks-noarch.tar.xz
+ADD https://github.com/just-containers/s6-overlay/releases/download/v${S6_OVERLAY_VERSION}/s6-overlay-symlinks-arch.tar.xz /tmp
+RUN tar -C /root/builder -Jxpf /tmp/s6-overlay-symlinks-arch.tar.xz
+
+# new base image
+FROM ubuntu:22.04
+
+# set environment variables
+ENV DEBIAN_FRONTEND="noninteractive" \
+    HOME="/root" \
+    LANGUAGE="en_US.UTF-8" \
+    LANG="en_US.UTF-8" \
+    TERM="xterm" \
+    S6_CMD_WAIT_FOR_SERVICES_MAXTIME="0" \
+    S6_VERBOSITY=1
+
+RUN \
+  echo "**** generate locale ****" && \
+  #locale-gen en_US.UTF-8 && \
+  echo "**** create xuser user and make our folders ****" && \
+  useradd -u 911 -U -d /config -s /bin/false xuser && \
+  usermod -G users xuser && \
+  mkdir -p /config
+
+# copy s6 files from builder image
+COPY --from=builder /root/builder/ /
+
+# add local files
+COPY root/ /
+
+# start container with init
+ENTRYPOINT ["/init"]

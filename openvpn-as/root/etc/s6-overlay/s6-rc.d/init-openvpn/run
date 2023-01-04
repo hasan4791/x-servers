@@ -1,0 +1,69 @@
+#!/usr/bin/with-contenv bash
+
+# make folders
+mkdir -p /openvpn{/pid,/sock,/tmp} /config/log /config/etc/tmp
+
+# create tun device
+if [ ! -c /dev/net/tun ]; then
+  mkdir -p /dev/net
+  mknod /dev/net/tun c 10 200
+fi
+
+# install or update openvpn-as
+if [[ $(find /config -type f | wc -l) -eq 0 ]]; then
+    cp -r /usr/local/openvpn_as/* /config/
+fi
+
+rm -rf /usr/local/openvpn_as
+ln -s /config /usr/local/openvpn_as
+if [ ! -f /config/etc/as.conf ]; then
+    echo "Init openvpn-as for the first time"
+    sed -i \
+        -e 's#=openvpn_as#=xuser#g' \
+        -e 's#~/tmp#/openvpn/tmp#g' \
+        -e 's#~/sock#/openvpn/sock#g' \
+        /usr/local/openvpn_as/etc/as_templ.conf
+    NOASCONFIG='DELETE\n'
+    ASCONFIG='yes\nyes\n1\nrsa\n2048\nrsa\n2048\n943\n443\nyes\nyes\nyes\nyes\n\n\n'
+
+    if [ ! -f "/config/etc/as.conf" ]; then
+        CONFINPUT=$ASCONFIG
+    else
+        CONFINPUT=$NOASCONFIG$ASCONFIG
+    fi
+
+    if [[ $(find /config/etc/db -type f | wc -l) -eq 0 || ! -f "/config/etc/as.conf" || (-f "/config/etc/as.conf" && $(grep "vpn.server.user=openvpn_as" /config/etc/as.conf)) ]]; then
+        # shellcheck disable=SC2059
+        printf  "${CONFINPUT}" | /usr/local/openvpn_as/bin/ovpn-init
+    fi
+
+    echo "
+    *************************************************
+    ** YOU'RE ADVISED TO CHANGE THE ADMIN PASSWORD **
+    ** ON THE FIRST LOGIN.                         **
+    ************************************************* 
+    "
+else
+    echo "Loading from existing data"
+fi
+
+# clear old sock files
+for file in /openvpn/sock/*
+do
+    if [ -e "$file" ]; then
+        rm -rf "$file"
+    fi
+done
+
+# clear old pid files
+for file in /openvpn/pid/*
+do
+    if [ -e "$file" ]; then
+        rm -rf "$file"
+    fi
+done
+
+
+# permissions
+chmod -R 755 /openvpn
+chown -R xuser:xuser /config

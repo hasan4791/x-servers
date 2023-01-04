@@ -1,0 +1,4 @@
+#!/usr/bin/with-contenv bash
+
+kill "$(cat /openvpn/pid/openvpn.pid)"
+/usr/local/openvpn_as/scripts/openvpn_service_cleanup
