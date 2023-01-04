@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-S6_OVERLAY_VERSION="3.1.2.1"
+S6_OVERLAY_VERSION=$(curl -sX GET "https://api.github.com/repos/just-containers/s6-overlay/releases/latest" | \
+                        awk '/tag_name/{print $4;exit}' FS='[""]' | awk '{print substr($1,2); }')
 
 if [ "$1" == "arm64" ]; then
     TARGET_ARCH="arm64"
