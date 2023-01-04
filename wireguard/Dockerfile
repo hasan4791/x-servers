@@ -1,5 +1,7 @@
 FROM localhost/xs-baseimage-ubuntu:22.04
 
+ARG ARCH="amd64"
+
 RUN \
   echo "**** install dependencies ****" && \
   apt-get update && \
@@ -40,7 +42,7 @@ RUN \
     | awk '/tag_name/{print $4;exit}' FS='[""]' | awk '{print substr($1,2); }') && \
   curl -o \
     /tmp/coredns.tar.gz -L \
-    "https://github.com/coredns/coredns/releases/download/v${COREDNS_VERSION}/coredns_${COREDNS_VERSION}_linux_amd64.tgz" && \
+    "https://github.com/coredns/coredns/releases/download/v${COREDNS_VERSION}/coredns_${COREDNS_VERSION}_linux_${ARCH}.tgz" && \
   tar xf \
     /tmp/coredns.tar.gz -C \
     /app && \
