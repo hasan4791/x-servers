@@ -8,8 +8,10 @@ if [[ ! -d "${WORKING_DIR}"/config ]]; then
 	mkdir -p "${WORKING_DIR}"/config
 fi
 
-#Run as Roolful mode
-podman run -d \
+# Run as Root container in podman
+# with PUID & PGID of non-root user
+# inside the container
+sudo podman run -d \
 	--name=openvpn-as \
 	--cap-add=NET_ADMIN \
 	--device=/dev/net/tun \

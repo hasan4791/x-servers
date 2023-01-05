@@ -8,7 +8,10 @@ if [[ ! -d "${WORKING_DIR}"/config ]]; then
 	mkdir -p "${WORKING_DIR}"/config
 fi
 
-podman run -d \
+# Run as Root container in podman
+# with PUID & PGID of non-root user
+# inside the container
+sudo podman run -d \
 	--name=wireguard \
 	--cap-add=NET_ADMIN \
 	-e PUID=1000 \
