@@ -7,12 +7,16 @@ ARG ARCH="amd64"
 RUN \
  echo "**** Install dependencies ****" && \
  apt-get update && \
- apt-get install -y \
+ apt-get install -y --no-install-recommends \
  ca-certificates \
- wget \
+ locales \
  net-tools \
  gnupg \
- vim && \
+ tzdata \
+ vim \
+ wget && \
+ echo "**** generate locale ****" && \
+ locale-gen en_US.UTF-8 && \
  echo "**** Add openvpn-as repo ****" && \
  wget https://as-repository.openvpn.net/as-repo-public.asc -qO /etc/apt/trusted.gpg.d/as-repository.asc && \
  echo "deb [arch=${ARCH} signed-by=/etc/apt/trusted.gpg.d/as-repository.asc] http://as-repository.openvpn.net/as/debian jammy main">/etc/apt/sources.list.d/openvpn-as-repo.list && \

@@ -16,3 +16,5 @@ User gid:    $(id -g xuser)
 -------------------------------------
 "
 chown xuser:xuser /config
+chown xuser:xuser /app
+chown xuser:xuser /defaults

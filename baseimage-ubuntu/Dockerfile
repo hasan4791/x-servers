@@ -30,8 +30,6 @@ ENV DEBIAN_FRONTEND="noninteractive" \
     S6_VERBOSITY=1
 
 RUN \
-  echo "**** generate locale ****" && \
-  #locale-gen en_US.UTF-8 && \
   echo "**** create xuser user and make our folders ****" && \
   useradd -u 911 -U -d /config -s /bin/false xuser && \
   usermod -G users xuser && \

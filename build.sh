@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 #Input parametes
 BUILD_ARCH=$1
 BUILD_SERVERS=$2
