@@ -25,11 +25,11 @@ dnf update -y
 dnf upgrade -y
 
 #Update container images
+cd /root/x-servers/
 for server in ${XSERVER_IMG}; do
-	cd /root/x-servers/"$server"
-	./build.sh "arm64"
-	cd -
+	./build.sh "arm64" "$server"
 done
+cd -
 
 #Start containers
 for server in ${XSERVERS}; do
