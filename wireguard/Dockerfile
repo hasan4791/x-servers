@@ -6,37 +6,22 @@ RUN \
   echo "**** install dependencies ****" && \
   apt-get update && \
   apt-get install -y --no-install-recommends \
-    bc \
-    build-essential \
     ca-certificates \
     curl \
-    dkms \
-    git \
-    gnupg \ 
     ifupdown \
     iproute2 \
     iptables \
     iputils-ping \
-    jq \
-    libc6 \
-    libelf-dev \
+    locales \
     net-tools \
     netcat \
     openresolv \
-    perl \
-    pkg-config \
-    qrencode && \
-  update-alternatives --set iptables /usr/sbin/iptables-legacy && \
-  echo "**** install wireguard-tools ****" && \
-  WIREGUARD_RELEASE=$(curl -sX GET "https://api.github.com/repos/WireGuard/wireguard-tools/tags" \
-    | jq -r .[0].name) && \
-  cd /app && \
-  git clone https://git.zx2c4.com/wireguard-linux-compat && \
-  git clone https://git.zx2c4.com/wireguard-tools && \
-  cd wireguard-tools && \
-  git checkout "${WIREGUARD_RELEASE}" && \
-  make -C src -j$(nproc) && \
-  make -C src install && \
+    qrencode \
+    tzdata \
+    vim \
+    wireguard-tools && \
+  echo "**** generate locale ****" && \
+  locale-gen en_US.UTF-8 && \
   echo "**** install CoreDNS ****" && \
   COREDNS_VERSION=$(curl -sX GET "https://api.github.com/repos/coredns/coredns/releases/latest" \
     | awk '/tag_name/{print $4;exit}' FS='[""]' | awk '{print substr($1,2); }') && \

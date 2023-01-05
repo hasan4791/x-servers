@@ -14,6 +14,7 @@ fi
 sudo podman run -d \
 	--name=wireguard \
 	--cap-add=NET_ADMIN \
+	-h wireguard \
 	-e PUID=1000 \
 	-e PGID=1000 \
 	-e TZ=Asia/Kolkata \
@@ -27,4 +28,4 @@ sudo podman run -d \
 	-p 51820:51820/udp \
 	-v "${WORKING_DIR}"/config:/config:Z \
 	--restart always \
-    localhost/xs-wireguard:latest
+	localhost/xs-wireguard:latest
