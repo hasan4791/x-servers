@@ -13,7 +13,7 @@ RUN \
  net-tools \
  gnupg \
  tzdata \
- vim \
+ nano \
  wget && \
  echo "**** generate locale ****" && \
  locale-gen en_US.UTF-8 && \

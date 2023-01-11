@@ -18,7 +18,7 @@ RUN \
     openresolv \
     qrencode \
     tzdata \
-    vim \
+    nano \
     wireguard-tools && \
   echo "**** generate locale ****" && \
   locale-gen en_US.UTF-8 && \
