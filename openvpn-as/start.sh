@@ -2,17 +2,23 @@
 
 set -e
 
-WORKING_DIR="$(pwd)"
+CONTAINER_NAME=$(basename $(pwd))
 
-if [[ ! -d "${WORKING_DIR}"/config ]]; then
-	mkdir -p "${WORKING_DIR}"/config
+if [ -z "${XSERVERS_DATA_PATH}" ]; then
+    CONFIG_PATH="$(pwd)"
+else
+    CONFIG_PATH="${XSERVERS_DATA_PATH}"/"${CONTAINER_NAME}"
+fi
+
+if [[ ! -d "${CONFIG_PATH}"/config ]]; then
+    mkdir -p "${CONFIG_PATH}"/config
 fi
 
 # Run as Root container in podman
 # with PUID & PGID of non-root user
 # inside the container
 sudo podman run -d \
-	--name=openvpn-as \
+	--name="${CONTAINER_NAME}" \
 	--cap-add=NET_ADMIN \
 	--device=/dev/net/tun \
 	-e PUID=1000 \
@@ -22,6 +28,6 @@ sudo podman run -d \
 	-p 9943:943/tcp \
 	-p 1194:443/tcp \
 	-p 1194:1194/udp \
-	-v "${WORKING_DIR}"/config:/config:Z \
+	-v "${CONFIG_PATH}"/config:/config:Z \
 	--restart always \
 	localhost/xs-openvpn-as:latest
