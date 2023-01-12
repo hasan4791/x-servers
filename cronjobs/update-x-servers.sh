@@ -38,7 +38,7 @@ handle_failure() {
 	#Start container with previous image
 	start_containers
 	send_slack_notification "fail"
-    rm -f /tmp/lock
+	rm -f /tmp/lock
 }
 
 start_containers() {

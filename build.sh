@@ -11,8 +11,8 @@ BUILD_MODE=$3
 S6_OVERLAY_VERSION=$(curl -sX GET "https://api.github.com/repos/just-containers/s6-overlay/releases/latest" |
 	awk '/tag_name/{print $4;exit}' FS='[""]' | awk '{print substr($1,2); }')
 ANSIBLE_CORE_VERSION="2.13.7"
-COREDNS_VERSION=$(curl -sX GET "https://api.github.com/repos/coredns/coredns/releases/latest" | 
-    awk '/tag_name/{print $4;exit}' FS='[""]' | awk '{print substr($1,2); }')
+COREDNS_VERSION=$(curl -sX GET "https://api.github.com/repos/coredns/coredns/releases/latest" |
+	awk '/tag_name/{print $4;exit}' FS='[""]' | awk '{print substr($1,2); }')
 
 XSERVER_DIRS=("baseimage-ubuntu" "openvpn-as" "wireguard")
 XSERVER_REGISTRY="localhost"
@@ -41,7 +41,7 @@ fi
 #Defaults to rootful mode
 CONTAINER_BIN="sudo podman"
 if [ "${BUILD_MODE}" == "rootless" ]; then
-    CONTAINER_BIN="podman"
+	CONTAINER_BIN="podman"
 fi
 
 #Create images
@@ -50,8 +50,8 @@ for server in ${BUILD_SERVERS}; do
 		--build-arg S6_OVERLAY_ARCH="${S6_OVERLAY_ARCH}" \
 		--build-arg S6_OVERLAY_VERSION="${S6_OVERLAY_VERSION}" \
 		--build-arg ARCH="${TARGET_ARCH}" \
-        --build-arg ANSIBLE_CORE_VERSION="${ANSIBLE_CORE_VERSION}" \
-        --build-arg COREDNS_VERSION="${COREDNS_VERSION}" \
+		--build-arg ANSIBLE_CORE_VERSION="${ANSIBLE_CORE_VERSION}" \
+		--build-arg COREDNS_VERSION="${COREDNS_VERSION}" \
 		-t "${XSERVER_REGISTRY}"/"${XSERVER_IMG[$server]}" \
 		-f "$server"/Dockerfile \
 		"$server"/.
