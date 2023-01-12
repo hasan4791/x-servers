@@ -1,6 +1,7 @@
 FROM localhost/xs-baseimage-ubuntu:22.04
 
 ARG ARCH="amd64"
+ARG COREDNS_VERSION
 
 RUN \
   echo "**** install dependencies ****" && \
@@ -23,8 +24,6 @@ RUN \
   echo "**** generate locale ****" && \
   locale-gen en_US.UTF-8 && \
   echo "**** install CoreDNS ****" && \
-  COREDNS_VERSION=$(curl -sX GET "https://api.github.com/repos/coredns/coredns/releases/latest" \
-    | awk '/tag_name/{print $4;exit}' FS='[""]' | awk '{print substr($1,2); }') && \
   curl -o \
     /tmp/coredns.tar.gz -L \
     "https://github.com/coredns/coredns/releases/download/v${COREDNS_VERSION}/coredns_${COREDNS_VERSION}_linux_${ARCH}.tgz" && \
@@ -32,10 +31,13 @@ RUN \
     /tmp/coredns.tar.gz -C \
     /app && \
   echo "**** clean up ****" && \
+  apt-get autoremove && \
+  apt-get clean && \
   rm -rf \
     /tmp/* \
     /var/lib/apt/lists/* \
-    /var/tmp/*
+    /var/tmp/* \
+    /var/log/*
 
 # add local files
 COPY /root /

@@ -12,6 +12,9 @@ generate_confs() {
 $(cat /config/templates/server.conf)
 
 DUDE"
+	# Update default interface in iptable rules
+	DEFAULT_INTERFACE="$(ip route | grep "default" | awk '{print $5}')"
+	sed -i -e "s/eth+/${DEFAULT_INTERFACE}/g" /config/wg0.conf
 	for i in ${PEERS_ARRAY[@]}; do
 		if [[ ! "${i}" =~ ^[[:alnum:]]+$ ]]; then
 			echo "**** Peer ${i} contains non-alphanumeric characters and thus will be skipped. No config for peer ${i} will be generated. ****"
