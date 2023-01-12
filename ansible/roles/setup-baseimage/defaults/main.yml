@@ -1,0 +1,3 @@
+---
+task_retries: 10
+task_delay: 10

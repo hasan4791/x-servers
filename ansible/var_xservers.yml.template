@@ -1,0 +1,10 @@
+---
+xserver_root: ""
+xserver_data: ""
+xserver_install: "all"
+xserver_target_arch: ""
+xserver_baseimage: "localhost/xs-baseimage-ubuntu:22.04"
+xserver_wireguard: "localhost/xs-wireguard:latest"
+xserver_openvpnas: "localhost/xs-openvpn-as:latest"
+xserver_slack_url: ""
+xserver_force_update: false

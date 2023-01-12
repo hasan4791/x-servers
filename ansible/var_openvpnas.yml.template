@@ -1,0 +1,9 @@
+---
+ov_force_update: false
+ov_timezone: "Asia/Kolkata"
+ov_admin_port: 943
+ov_client_port_tcp: 443
+ov_client_port_udp: 1194
+ov_admin_port_publish: 943
+ov_client_port_tcp_publish: 443
+ov_client_port_udp_publish: 1194

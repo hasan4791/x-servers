@@ -40,7 +40,7 @@
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: install == "all" or install == "openvpnas"
+  when: xserver_install == "all" or xserver_install == "openvpnas"
 
 - name: Openvpn specific modules
   lineinfile:
@@ -50,7 +50,7 @@
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: install == "all" or install == "openvpnas"
+  when: xserver_install == "all" or xserver_install == "openvpnas"
 
 - name: Wireguard specific modules
   lineinfile:
@@ -60,24 +60,15 @@
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: install == "all" or install == "wireguard"
+  when: xserver_install == "all" or xserver_install == "wireguard"
 
 - name: Update sysctl
   copy:
     src: files/podman-net.conf
-    dest: /etc/modules-load.d/podman-net.conf
+    dest: /etc/sysctl.d/podman-net.conf
     owner: root
     group: root
     mode: 0644
-  register: task_status
-  until: task_status is successful
-  retries: "{{ task_retries | int }}"
-  delay: "{{ task_delay | int }}"
-
-- name: Create working directory
-  file:
-    path: /root/x-servers
-    state: directory
   register: task_status
   until: task_status is successful
   retries: "{{ task_retries | int }}"

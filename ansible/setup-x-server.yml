@@ -4,8 +4,19 @@
   - set_fact:
       # Oracle Linux 9
       operating_system: "ol9"
+  vars_files:
+    - var_xservers.yml
+    - var_wireguard.yml
+    - var_openvpnas.yml
   roles:
-    - setup-instance
-    - {role: setup-openvpn-as, when: install == "all" or install == "openvpnas"}
-    - {role: setup-wireguard, when: install == "all" or install == "wireguard"}
-    - setup-cronjobs
+    # Run this role as priviledges user
+    - role: setup-instance
+      become: true
+    - setup-baseimage
+    - role: setup-openvpnas
+      when: xserver_install == "all" or xserver_install == "openvpn-as"
+    - role: setup-wireguard
+      when: xserver_install == "all" or xserver_install == "wireguard"
+    - role: setup-cronjob
+      become: true
+    - cleanup

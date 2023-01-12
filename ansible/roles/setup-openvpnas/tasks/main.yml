@@ -1,11 +1,11 @@
 ---
-- name: Create wireguard data directory
+- name: Create openvpn data directory
   file:
     path: "{{ xserver_data }}/x-servers-data/{{ item.name }}"
     state: directory
   with_items:
-    - {name: 'wireguard'}
-    - {name: 'wireguard/config'}
+    - {name: 'openvpn-as'}
+    - {name: 'openvpn-as/config'}
   register: task_status
   until: task_status is successful
   retries: "{{ task_retries | int }}"
@@ -13,8 +13,8 @@
 
 - name: Archive server files
   archive:
-    path: /x-servers/wireguard
-    dest: /tmp/wireguard.tgz
+    path: /x-servers/openvpn-as
+    dest: /tmp/openvpn-as.tgz
     format: gz
   delegate_to: 127.0.0.1
   register: task_status
@@ -24,17 +24,17 @@
 
 - name: Unarchive server files
   unarchive:
-    src: /tmp/wireguard.tgz
+    src: /tmp/openvpn-as.tgz
     dest: "{{ xserver_root }}/x-servers/"
   register: task_status
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
 
-- name: Copy wireguard start script
+- name: Copy openvpn start script
   template:
     src: start.sh
-    dest: "{{ xserver_root }}/x-servers/wireguard/"
+    dest: "{{ xserver_root }}/x-servers/openvpn-as/"
     mode: 0744
   register: task_status
   until: task_status is successful
@@ -43,32 +43,32 @@
 
 - name: Check image exists
   podman_image_info:
-    name: "{{ xserver_wireguard }}"
+    name: "{{ xserver_openvpnas }}"
   become: true
   register: image_info
   ignore_errors: true
 
 - name: Build image if not exists
-  shell: "(cd {{ xserver_root }}/x-servers; ./build.sh \"{{ xserver_target_arch }}\" \"wireguard\")"
+  shell: "(cd {{ xserver_root }}/x-servers; ./build.sh \"{{ xserver_target_arch }}\" \"openvpn-as\")"
   register: task_status
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: image_info.images|length == 0 or xserver_force_update|bool or wg_force_update|bool
+  when: image_info.images|length == 0 or xserver_force_update|bool or ov_force_update|bool
 
-- name: Stop & Remove Wireguard Server
+- name: Stop & Remove Openvpn-AS Server
   containers.podman.podman_container:
-    name: wireguard
+    name: openvpn-as
     state: absent
   become: true
   register: task_status
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: xserver_force_update|bool or wg_force_update|bool
+  when: xserver_force_update|bool or ov_force_update|bool
 
-- name: Start Wireguard Server
-  shell: "(cd {{ xserver_root }}/x-servers/wireguard; ./start.sh)"
+- name: Start Openvpn-AS Server
+  shell: "(cd {{ xserver_root }}/x-servers/openvpn-as; ./start.sh)"
   environment:
     XSERVER_DATA_PATH: "{{ xserver_data }}/x-servers-data"
   register: task_status
