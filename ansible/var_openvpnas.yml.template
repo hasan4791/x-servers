@@ -1,5 +1,6 @@
 ---
 ov_force_update: false
+ov_rootless: false
 ov_timezone: "Asia/Kolkata"
 ov_admin_port: 943
 ov_client_port_tcp: 443

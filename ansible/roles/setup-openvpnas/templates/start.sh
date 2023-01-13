@@ -17,13 +17,25 @@ fi
 
 #Defaults to rootful mode
 CONTAINER_BIN="sudo podman"
+{% if user_id.stdout is defined %}
+CONTAINER_USER={{ user_id.stdout }}
+{% else %}
 CONTAINER_USER="1000"
+{% endif %}
+{% if group_id.stdout is defined %}
+CONTAINER_GROUP={{ group_id.stdout }}
+{% else %}
 CONTAINER_GROUP="1000"
+{% endif %}
 if [ "${CONTAINER_MODE}" == "rootless" ]; then
 	CONTAINER_BIN="podman"
 	# In rootless mode, container root user
 	# is mapped to host's non-root user
+{% if xserver_container_non_root_uid is defined %}
+	CONTAINER_USER={{ xserver_container_non_root_uid }}
+{% else %}
 	CONTAINER_USER=0
+{% endif %}
 	CONTAINER_GROUP=0
 fi
 

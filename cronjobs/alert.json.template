@@ -15,7 +15,7 @@
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "```Container Status:\n_CONTAINER_STATUS_```"
+        "text": "```_CONTAINER_STATUS_TITLE_:\n_CONTAINER_STATUS_```"
       }
     }
   ]

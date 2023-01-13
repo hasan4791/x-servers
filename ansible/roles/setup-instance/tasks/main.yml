@@ -74,6 +74,21 @@
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
 
+- name: Create a new user(xuser) for container
+  user:
+    name: xuser
+    comment: For xserver container non-root user
+    uid: "{{ xserver_container_non_root_uid }}"
+    group: "{{ xserver_host_non_root_group }}"
+    create_home: false
+    password: '!'
+    password_lock: true
+    shell: /usr/sbin/nologin/
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
 - name: Reboot server
   reboot:
     post_reboot_delay: 60

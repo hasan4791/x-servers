@@ -8,3 +8,7 @@ xserver_wireguard: "localhost/xs-wireguard:latest"
 xserver_openvpnas: "localhost/xs-openvpn-as:latest"
 xserver_slack_url: ""
 xserver_force_update: false
+xserver_rootless: false
+xserver_host_non_root_user: "abc"
+xserver_host_non_root_group: "abc"
+xserver_container_non_root_uid: "5000"

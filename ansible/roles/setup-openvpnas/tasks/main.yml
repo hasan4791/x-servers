@@ -31,6 +31,20 @@
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
 
+- name: Fetch non-root user id
+  shell: "(id -u {{ xserver_host_non_root_user }})"
+  register: user_id
+  until: user_id is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: Fetch non-root group id
+  shell: "(id -g {{ xserver_host_non_root_group }})"
+  register: group_id
+  until: group_id is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
 - name: Copy openvpn start script
   template:
     src: start.sh
@@ -41,20 +55,32 @@
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
 
+- name: Check root/rootless mode
+  set_fact:
+    ov_rootless: true
+  when: not xserver_rootless|bool or not ov_rootless|bool
+
+- name: Check force update
+  set_fact:
+    ov_force_update: true
+  when: xserver_force_update|bool or ov_force_update|bool
+
+# Rootful Mode
 - name: Check image exists
   podman_image_info:
     name: "{{ xserver_openvpnas }}"
   become: true
   register: image_info
   ignore_errors: true
+  when: not ov_rootless|bool
 
 - name: Build image if not exists
   shell: "(cd {{ xserver_root }}/x-servers; ./build.sh \"{{ xserver_target_arch }}\" \"openvpn-as\")"
-  register: task_status
-  until: task_status is successful
+  register: image_build
+  until: image_build is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: image_info.images|length == 0 or xserver_force_update|bool or ov_force_update|bool
+  when: image_info is not skipped and (image_info.images|length == 0 or ov_force_update|bool)
 
 - name: Stop & Remove Openvpn-AS Server
   containers.podman.podman_container:
@@ -65,7 +91,7 @@
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: xserver_force_update|bool or ov_force_update|bool
+  when: image_build is not skipped or ov_rootless|bool
 
 - name: Start Openvpn-AS Server
   shell: "(cd {{ xserver_root }}/x-servers/openvpn-as; ./start.sh)"
@@ -75,4 +101,40 @@
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: image_info.images|length == 0 or xserver_force_update|bool or ov_force_update|bool
+  when: image_build is not skipped
+
+# Rootless Mode
+- name: Check image exists
+  podman_image_info:
+    name: "{{ xserver_openvpnas }}"
+  register: image_info
+  ignore_errors: true
+  when: ov_rootless|bool
+
+- name: Build image if not exists
+  shell: "(cd {{ xserver_root }}/x-servers; ./build.sh \"{{ xserver_target_arch }}\" \"openvpn-as\" \"rootless\")"
+  register: image_build
+  until: image_build is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: image_info is not skipped and (image_info.images|length == 0 or ov_force_update|bool)
+
+- name: Stop & Remove Openvpn-AS Server
+  containers.podman.podman_container:
+    name: openvpn-as
+    state: absent
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: image_build is not skipped or not ov_rootless|bool
+
+- name: Start Openvpn-AS Server
+  shell: "(cd {{ xserver_root }}/x-servers/openvpn-as; ./start.sh \"rootless\")"
+  environment:
+    XSERVER_DATA_PATH: "{{ xserver_data }}/x-servers-data"
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: image_build is not skipped

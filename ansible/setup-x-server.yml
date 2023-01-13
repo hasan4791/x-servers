@@ -12,11 +12,12 @@
     # Run this role as priviledges user
     - role: setup-instance
       become: true
-    - setup-baseimage
+    - role: setup-baseimage
+      when: xserver_install != "none"
     - role: setup-openvpnas
       when: xserver_install == "all" or xserver_install == "openvpn-as"
     - role: setup-wireguard
       when: xserver_install == "all" or xserver_install == "wireguard"
     - role: setup-cronjob
-      become: true
+      when: xserver_install != "none"
     - cleanup

@@ -1,5 +1,6 @@
 ---
 wg_force_update: false
+wg_rootless: false
 wg_timezone: "Asia/Kolkata"
 wg_server_url: auto
 wg_server_port: 51821
