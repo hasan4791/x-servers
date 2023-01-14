@@ -1,0 +1,6 @@
+**/**/config
+**/**/inventory
+**/**/collections
+**/*.key
+**/*.pem
+**/var_*.yml

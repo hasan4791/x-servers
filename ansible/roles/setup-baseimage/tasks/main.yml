@@ -1,0 +1,84 @@
+---
+- name: Create xserver root directory
+  file:
+    path: "{{ xserver_root }}/x-servers"
+    state: directory
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: Create xserver data directory
+  file:
+    path: "{{ xserver_data }}/x-servers-data"
+    state: directory
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: Archive server files
+  archive:
+    path: /x-servers/baseimage-ubuntu
+    dest: /tmp/baseimage-ubuntu.tgz
+    format: gz
+  delegate_to: 127.0.0.1
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: Unarchive server files
+  unarchive:
+    src: /tmp/baseimage-ubuntu.tgz
+    dest: "{{ xserver_root }}/x-servers/"
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: Copy build script
+  copy:
+    src: /x-servers/build.sh
+    dest: "{{ xserver_root }}/x-servers/"
+    mode: preserve
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: Check force update
+  set_fact:
+    bs_force_update: true
+  when: xserver_force_update|bool or ov_force_update|bool or wg_force_update|bool
+
+# Rootful Mode
+- name: Check image exists
+  podman_image_info:
+    name: "{{ xserver_baseimage }}"
+  become: true
+  register: image_info
+  ignore_errors: true
+
+- name: Build image if not exists
+  shell: "(cd {{ xserver_root }}/x-servers; ./build.sh \"{{ xserver_target_arch }}\" \"baseimage-ubuntu\")"
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: image_info.images|length == 0 or bs_force_update|bool
+
+# Rootless Mode
+- name: Check image exists
+  podman_image_info:
+    name: "{{ xserver_baseimage }}"
+  register: image_info
+  ignore_errors: true
+
+- name: Build image if not exists
+  shell: "(cd {{ xserver_root }}/x-servers; ./build.sh \"{{ xserver_target_arch }}\" \"baseimage-ubuntu\" \"rootless\")"
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: image_info.images|length == 0 or bs_force_update|bool

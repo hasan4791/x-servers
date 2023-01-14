@@ -1,0 +1,11 @@
+SHELL=/bin/bash
+MAILTO=root@example.com
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+
+SLACK_URL="{{ xserver_slack_url }}"
+XSERVER_PATH="{{ xserver_root }}/x-servers"
+XSERVER_DATA_PATH="{{ xserver_data }}/x-servers-data"
+XSERVER_ARCH="{{ xserver_target_arch }}"
+
+#Update node & images weekly
+0 1 * * 0 {{ xserver_host_non_root_user }} "${XSERVER_PATH}"/cronjobs/update-x-servers.sh

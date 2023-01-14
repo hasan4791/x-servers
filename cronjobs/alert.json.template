@@ -1,0 +1,22 @@
+{
+  "blocks": [
+    {
+      "type": "header",
+      "text": {
+        "type": "plain_text",
+        "text": "Server _HOSTNAME_ Status _STATUS_ICON_",
+        "emoji": true
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "```_CONTAINER_STATUS_TITLE_:\n_CONTAINER_STATUS_```"
+      }
+    }
+  ]
+}

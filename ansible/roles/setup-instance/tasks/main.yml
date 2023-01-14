@@ -1,0 +1,95 @@
+---
+- name: Upgrade all packages
+  dnf:
+    name: "*"
+    state: latest
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: Install packages
+  dnf:
+    name: "{{ packages }}"
+    state: latest
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  vars:
+    packages:
+      - podman
+
+- name: Enable podman-restart service
+  systemd:
+    name: podman-restart
+    enabled: true
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: Update modules
+  copy:
+    src: files/x-server-modules.conf
+    dest: /etc/modules-load.d/x-server-modules.conf
+    owner: root
+    group: root
+    mode: 0644
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: xserver_install == "all" or xserver_install == "openvpnas"
+
+- name: Openvpn specific modules
+  lineinfile:
+    path: /etc/modules-load.d/x-server-modules.conf
+    line: 'tun'
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: xserver_install == "all" or xserver_install == "openvpnas"
+
+- name: Wireguard specific modules
+  lineinfile:
+    path: /etc/modules-load.d/x-server-modules.conf
+    line: 'wireguard'
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: xserver_install == "all" or xserver_install == "wireguard"
+
+- name: Update sysctl
+  copy:
+    src: files/podman-net.conf
+    dest: /etc/sysctl.d/podman-net.conf
+    owner: root
+    group: root
+    mode: 0644
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: Create a new user(xuser) for container
+  user:
+    name: xuser
+    comment: For xserver container non-root user
+    uid: "{{ xserver_container_non_root_uid }}"
+    group: "{{ xserver_host_non_root_group }}"
+    create_home: false
+    password: '!'
+    password_lock: true
+    shell: /usr/sbin/nologin/
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: Reboot server
+  reboot:
+    post_reboot_delay: 60
+    reboot_timeout: 300

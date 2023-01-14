@@ -1,0 +1,17 @@
+---
+- name: Clear podman image cache
+  command: podman system prune -a -f
+  become: true
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: xserver_install != "none"
+
+- name: Clear podman image cache
+  command: podman system prune -a -f
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: xserver_install != "none"
