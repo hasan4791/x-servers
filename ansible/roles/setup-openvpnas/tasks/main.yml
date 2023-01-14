@@ -167,6 +167,34 @@
   delay: "{{ task_delay | int }}"
   when: ov_rootless|bool
 
+- name: Change data directory ownership
+  file:
+    path: "{{ xserver_data }}/x-servers-data/openvpn-as/config"
+    owner: "{{ xserver_host_non_root_user }}"
+    group: "{{ xserver_host_non_root_group }}"
+    recurse: true
+    state: directory
+  become: true
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: ov_rootless|bool
+
+- name: Check container_use_devices status
+  command: getsebool container_use_devices
+  become: true
+  register: sebool_status
+  until: sebool_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: ov_rootless|bool
+
+- name: Fail on sebool_status off
+  fail:
+    msg: "Rootless Openvpn needs \"container_use_devices\" to be enabled"
+  when: sebool_status is not skipped and '"off" in sebool_status.stdout'
+
 - name: Start Openvpn-AS Server
   shell: "(cd {{ xserver_root }}/x-servers/openvpn-as; ./start.sh \"rootless\")"
   environment:
