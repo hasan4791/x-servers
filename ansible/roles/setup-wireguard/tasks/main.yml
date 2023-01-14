@@ -167,6 +167,20 @@
   delay: "{{ task_delay | int }}"
   when: wg_rootless|bool
 
+- name: Change data directory ownership
+  file:
+    path: "{{ xserver_data }}/x-servers-data/wireguard/config"
+    owner: "{{ xserver_host_non_root_user }}"
+    group: "{{ xserver_host_non_root_group }}"
+    recurse: true
+    state: directory
+  become: true
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: wg_rootless|bool
+
 - name: Start Wireguard Server
   shell: "(cd {{ xserver_root }}/x-servers/wireguard; ./start.sh \"rootless\")"
   environment:
