@@ -4,6 +4,7 @@
   - set_fact:
       # Oracle Linux 9
       operating_system: "ol9"
+      bs_force_update: false
   vars_files:
     - var_xservers.yml
     - var_wireguard.yml

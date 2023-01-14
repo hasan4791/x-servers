@@ -58,7 +58,7 @@
 - name: Check root/rootless mode
   set_fact:
     wg_rootless: true
-  when: not xserver_rootless|bool or not wg_rootless|bool
+  when: xserver_rootless|bool or wg_rootless|bool
 
 - name: Check force update
   set_fact:
@@ -82,6 +82,15 @@
   delay: "{{ task_delay | int }}"
   when: image_info is not skipped and (image_info.images|length == 0 or wg_force_update|bool)
 
+- name: Check container status
+  containers.podman.podman_container_info:
+    name: wireguard
+  become: true
+  register: container_status
+  until: container_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
 - name: Stop & Remove Wireguard Server
   containers.podman.podman_container:
     name: wireguard
@@ -91,7 +100,17 @@
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: image_build is not skipped or wg_rootless|bool
+  when: image_build is not skipped or (container_status.containers|length != 0 and not container_status.containers[0].State.Running|bool)
+
+- name: Stop & Remove Wireguard Server
+  containers.podman.podman_container:
+    name: wireguard
+    state: absent
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: not wg_rootless|bool
 
 - name: Start Wireguard Server
   shell: "(cd {{ xserver_root }}/x-servers/wireguard; ./start.sh)"
@@ -101,7 +120,7 @@
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: image_build is not skipped
+  when: image_build is not skipped or (not wg_rootless|bool and not (container_status.containers|length != 0 and container_status.containers[0].State.Running|bool))
 
 # Rootless Mode
 - name: Check image exists
@@ -119,6 +138,14 @@
   delay: "{{ task_delay | int }}"
   when: image_info is not skipped and (image_info.images|length == 0 or wg_force_update|bool)
 
+- name: Check container status
+  containers.podman.podman_container_info:
+    name: wireguard
+  register: container_status
+  until: container_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
 - name: Stop & Remove Wireguard Server
   containers.podman.podman_container:
     name: wireguard
@@ -127,7 +154,18 @@
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: image_build is not skipped or not wg_rootless|bool
+  when: image_build is not skipped or (container_status.containers|length != 0 and not container_status.containers[0].State.Running|bool)
+
+- name: Stop & Remove Wireguard Server
+  containers.podman.podman_container:
+    name: wireguard
+    state: absent
+  become: true
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: wg_rootless|bool
 
 - name: Start Wireguard Server
   shell: "(cd {{ xserver_root }}/x-servers/wireguard; ./start.sh \"rootless\")"
@@ -137,4 +175,4 @@
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: image_build is not skipped
+  when: image_build is not skipped or (wg_rootless|bool and not (container_status.containers|length != 0 and container_status.containers[0].State.Running|bool))

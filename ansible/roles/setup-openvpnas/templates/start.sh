@@ -45,7 +45,7 @@ fi
 ${CONTAINER_BIN} run -d \
 	--name="${CONTAINER_NAME}" \
 	--cap-add=NET_ADMIN \
-    --device=/dev/net/tun \
+	--device=/dev/net/tun \
 	-h "${CONTAINER_NAME}" \
 	-e PUID="${CONTAINER_USER}" \
 	-e PGID="${CONTAINER_GROUP}" \

@@ -98,9 +98,11 @@ podman system prune -a -f
 #Send notification to Slack
 send_slack_notification "success"
 
-echo "System will reboot in 60 Seconds" | wall
-sleep 60
 rm -f /tmp/lock
 
 #Reboot node
-reboot
+if [ "$EUID" -eq 0 ]; then
+	echo "System will reboot in 60 Seconds" | wall
+	sleep 60
+	reboot
+fi
