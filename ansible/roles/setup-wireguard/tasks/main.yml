@@ -90,6 +90,7 @@
   until: container_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
+  when: not wg_rootless|bool
 
 - name: Stop & Remove Wireguard Server
   containers.podman.podman_container:
@@ -100,7 +101,7 @@
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: image_build is not skipped or (container_status.containers|length != 0 and not container_status.containers[0].State.Running|bool)
+  when: image_build is not skipped or (not wg_rootless|bool and container_status.containers|length != 0 and not container_status.containers[0].State.Running|bool)
 
 - name: Stop & Remove Wireguard Server
   containers.podman.podman_container:
@@ -145,6 +146,7 @@
   until: container_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
+  when: wg_rootless|bool
 
 - name: Stop & Remove Wireguard Server
   containers.podman.podman_container:
@@ -154,12 +156,42 @@
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: image_build is not skipped or (container_status.containers|length != 0 and not container_status.containers[0].State.Running|bool)
+  when: image_build is not skipped or (wg_rootless|bool and container_status.containers|length != 0 and not container_status.containers[0].State.Running|bool)
 
 - name: Stop & Remove Wireguard Server
   containers.podman.podman_container:
     name: wireguard
     state: absent
+  become: true
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: wg_rootless|bool
+
+- name: Fetch podman non-root user id
+  command: id -u
+  register: podman_user_id
+  until: user_id is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: wg_rootless|bool
+
+- name: Fetch podman non-root group id
+  command: id -g
+  register: podman_group_id
+  until: group_id is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: wg_rootless|bool
+
+- name: Change data directory ownership
+  file:
+    path: "{{ xserver_data }}/x-servers-data/wireguard/config"
+    owner: "{{ podman_user_id.stdout }}"
+    group: "{{ podman_group_id.stdout }}"
+    recurse: true
+    state: directory
   become: true
   register: task_status
   until: task_status is successful

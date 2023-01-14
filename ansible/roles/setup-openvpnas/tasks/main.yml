@@ -90,6 +90,7 @@
   until: container_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
+  when: not ov_rootless|bool
 
 - name: Stop & Remove Openvpn-AS Server
   containers.podman.podman_container:
@@ -100,7 +101,7 @@
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: image_build is not skipped or (container_status.containers|length != 0 and not container_status.containers[0].State.Running|bool)
+  when: image_build is not skipped or (not ov_rootless|bool and container_status.containers|length != 0 and not container_status.containers[0].State.Running|bool)
 
 - name: Stop & Remove Openvpn-AS Server
   containers.podman.podman_container:
@@ -145,6 +146,7 @@
   until: container_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
+  when: ov_rootless|bool
 
 - name: Stop & Remove Openvpn-AS Server
   containers.podman.podman_container:
@@ -154,7 +156,7 @@
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: image_build is not skipped or (container_status.containers|length != 0 and not container_status.containers[0].State.Running|bool)
+  when: image_build is not skipped or (ov_rootless|bool and container_status.containers|length != 0 and not container_status.containers[0].State.Running|bool)
 
 - name: Stop & Remove Openvpn-AS Server
   containers.podman.podman_container:
@@ -166,6 +168,50 @@
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
   when: ov_rootless|bool
+
+- name: Fetch podman non-root user id
+  command: id -u
+  register: podman_user_id
+  until: user_id is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: ov_rootless|bool
+
+- name: Fetch podman non-root group id
+  command: id -g
+  register: podman_group_id
+  until: group_id is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: ov_rootless|bool
+
+- name: Change data directory ownership
+  file:
+    path: "{{ xserver_data }}/x-servers-data/openvpn-as/config"
+    owner: "{{ podman_user_id.stdout }}"
+    group: "{{ podman_group_id.stdout }}"
+    recurse: true
+    state: directory
+  become: true
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: ov_rootless|bool
+
+- name: Check container_use_devices status
+  command: getsebool container_use_devices
+  become: true
+  register: sebool_status
+  until: sebool_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: ov_rootless|bool
+
+- name: Fail on sebool_status off
+  fail:
+    msg: "Rootless Openvpn needs \"container_use_devices\" to be enabled"
+  when: 'sebool_status is not skipped and "off" in sebool_status.stdout'
 
 - name: Start Openvpn-AS Server
   shell: "(cd {{ xserver_root }}/x-servers/openvpn-as; ./start.sh \"rootless\")"
