@@ -61,7 +61,10 @@
   ignore_errors: true
 
 - name: Build image if not exists
-  shell: "(cd {{ xserver_root }}/x-servers; ./build.sh \"{{ xserver_target_arch }}\" \"baseimage-ubuntu\")"
+  command:
+    cmd: ./build.sh "{{ xserver_target_arch }}" "baseimage-ubuntu"
+    chdir: "{{ xserver_root }}/x-servers"
+  become: true
   register: task_status
   until: task_status is successful
   retries: "{{ task_retries | int }}"
@@ -76,7 +79,9 @@
   ignore_errors: true
 
 - name: Build image if not exists
-  shell: "(cd {{ xserver_root }}/x-servers; ./build.sh \"{{ xserver_target_arch }}\" \"baseimage-ubuntu\" \"rootless\")"
+  command:
+    cmd: ./build.sh "{{ xserver_target_arch }}" "baseimage-ubuntu"
+    chdir: "{{ xserver_root }}/x-servers"
   register: task_status
   until: task_status is successful
   retries: "{{ task_retries | int }}"

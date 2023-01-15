@@ -24,6 +24,7 @@ fi
 
 if [ "$(podman ps -a --format "{{.Names}}" | wc -l)" -eq 0 ]; then
 	echo "No containers are running"
+	rm -f /tmp/lock
 	exit 0
 fi
 XSERVERS=$(podman ps -a --format "{{.Names}}")
@@ -96,7 +97,10 @@ start_containers
 podman system prune -a -f
 
 #Send notification to Slack
-send_slack_notification "success"
+# shellcheck disable=SC2236
+if [ ! -z "${SLACK_URL}" ]; then
+	send_slack_notification "success"
+fi
 
 rm -f /tmp/lock
 

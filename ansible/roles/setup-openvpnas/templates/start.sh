@@ -3,7 +3,10 @@
 set -e
 
 CONTAINER_NAME="$(basename "$(pwd)")"
-CONTAINER_MODE="$1"
+
+if [ "$EUID" -ne 0 ]; then
+    CONTAINER_MODE="rootless"
+fi
 
 if [ -z "${XSERVER_DATA_PATH}" ]; then
 	CONFIG_PATH="$(pwd)"
@@ -15,8 +18,6 @@ if [[ ! -d "${CONFIG_PATH}"/config ]]; then
 	mkdir -p "${CONFIG_PATH}"/config
 fi
 
-#Defaults to rootful mode
-CONTAINER_BIN="sudo podman"
 {% if user_id.stdout is defined %}
 CONTAINER_USER={{ user_id.stdout }}
 {% else %}
@@ -28,7 +29,6 @@ CONTAINER_GROUP={{ group_id.stdout }}
 CONTAINER_GROUP="1000"
 {% endif %}
 if [ "${CONTAINER_MODE}" == "rootless" ]; then
-	CONTAINER_BIN="podman"
 	# In rootless mode, container root user
 	# is mapped to host's non-root user
 {% if xserver_container_non_root_uid is defined %}
@@ -39,10 +39,10 @@ if [ "${CONTAINER_MODE}" == "rootless" ]; then
 	CONTAINER_GROUP=0
 fi
 
-# Run as Root container in podman
-# with PUID & PGID of non-root user
+# Run container in podman with
+# PUID & PGID of non-root user
 # inside the container
-${CONTAINER_BIN} run -d \
+podman run -d \
 	--name="${CONTAINER_NAME}" \
 	--cap-add=NET_ADMIN \
 	--device=/dev/net/tun \

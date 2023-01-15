@@ -32,14 +32,14 @@
   delay: "{{ task_delay | int }}"
 
 - name: Fetch non-root user id
-  shell: "(id -u {{ xserver_host_non_root_user }})"
+  command: id -u "{{ xserver_host_non_root_user }}"
   register: user_id
   until: user_id is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
 
 - name: Fetch non-root group id
-  shell: "(id -g {{ xserver_host_non_root_group }})"
+  command: id -u "{{ xserver_host_non_root_group }}"
   register: group_id
   until: group_id is successful
   retries: "{{ task_retries | int }}"
@@ -75,7 +75,10 @@
   when: not ov_rootless|bool
 
 - name: Build image if not exists
-  shell: "(cd {{ xserver_root }}/x-servers; ./build.sh \"{{ xserver_target_arch }}\" \"openvpn-as\")"
+  command:
+    cmd: ./build.sh "{{ xserver_target_arch }}" "openvpn-as"
+    chdir: "{{ xserver_root }}/x-servers"
+  become: true
   register: image_build
   until: image_build is successful
   retries: "{{ task_retries | int }}"
@@ -114,7 +117,10 @@
   when: not ov_rootless|bool
 
 - name: Start Openvpn-AS Server
-  shell: "(cd {{ xserver_root }}/x-servers/openvpn-as; ./start.sh)"
+  command:
+    cmd: ./start.sh
+    chdir: "{{ xserver_root }}/x-servers/openvpn-as"
+  become: true
   environment:
     XSERVER_DATA_PATH: "{{ xserver_data }}/x-servers-data"
   register: task_status
@@ -132,7 +138,9 @@
   when: ov_rootless|bool
 
 - name: Build image if not exists
-  shell: "(cd {{ xserver_root }}/x-servers; ./build.sh \"{{ xserver_target_arch }}\" \"openvpn-as\" \"rootless\")"
+  command:
+    cmd: ./build.sh "{{ xserver_target_arch }}" "openvpn-as"
+    chdir: "{{ xserver_root }}/x-servers"
   register: image_build
   until: image_build is successful
   retries: "{{ task_retries | int }}"
@@ -214,7 +222,9 @@
   when: 'sebool_status is not skipped and "off" in sebool_status.stdout'
 
 - name: Start Openvpn-AS Server
-  shell: "(cd {{ xserver_root }}/x-servers/openvpn-as; ./start.sh \"rootless\")"
+  command:
+    cmd: ./start.sh
+    chdir: "{{ xserver_root }}/x-servers/openvpn-as"
   environment:
     XSERVER_DATA_PATH: "{{ xserver_data }}/x-servers-data"
   register: task_status
