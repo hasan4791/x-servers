@@ -5,7 +5,6 @@ set -e
 #Input parametes
 BUILD_ARCH=$1
 BUILD_SERVERS=$2
-BUILD_MODE=$3
 
 #Build arguments
 S6_OVERLAY_VERSION=$(curl -sX GET "https://api.github.com/repos/just-containers/s6-overlay/releases/latest" |
@@ -38,15 +37,9 @@ if [ -z "${BUILD_SERVERS}" ]; then
 	BUILD_SERVERS="${XSERVER_DIRS[*]}"
 fi
 
-#Defaults to rootful mode
-CONTAINER_BIN="sudo podman"
-if [ "${BUILD_MODE}" == "rootless" ]; then
-	CONTAINER_BIN="podman"
-fi
-
 #Create images
 for server in ${BUILD_SERVERS}; do
-	${CONTAINER_BIN} build --arch="${TARGET_ARCH}" \
+	podman build --arch="${TARGET_ARCH}" \
 		--build-arg S6_OVERLAY_ARCH="${S6_OVERLAY_ARCH}" \
 		--build-arg S6_OVERLAY_VERSION="${S6_OVERLAY_VERSION}" \
 		--build-arg ARCH="${TARGET_ARCH}" \

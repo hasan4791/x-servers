@@ -20,10 +20,15 @@
   delay: "{{ task_delay | int }}"
 
 # Rootful Mode
+- name: Root cronjob parameters
+  set_fact:
+    xs_cron_schedule: "0 0 * * 0"
+    xs_cron_user: "root"
+
 - name: Copy cronjob script
   template:
-    src: xs-cronjob
-    dest: "/etc/cron.d/"
+    src: xs-cronjob.j2
+    dest: "/etc/cron.d/xs-root"
     mode: 0644
   become: true
   register: task_status
@@ -32,10 +37,15 @@
   delay: "{{ task_delay | int }}"
 
 # Rootless Mode
+- name: Rootless cronjob parameters
+  set_fact:
+    xs_cron_schedule: "1 0 * * 0"
+    xs_cron_user: "{{ xserver_host_non_root_user }}"
+
 - name: Copy cronjob script
   template:
-    src: xs-rootless-cronjob
-    dest: "/etc/cron.d/"
+    src: xs-cronjob.j2
+    dest: "/etc/cron.d/xs-rootless"
     mode: 0644
   become: true
   register: task_status
