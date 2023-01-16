@@ -1,7 +1,9 @@
 #!/usr/bin/with-contenv bash
+#shellcheck shell=bash
 
 # make folders
-mkdir -p /openvpn{/pid,/sock,/tmp} /config/log /config/etc/tmp
+mkdir -p /openvpn{/pid,/sock,/tmp}
+mkdir -p {/config/log, /config/etc/db, /config/etc/web-ssl}
 
 # create tun device
 if [ ! -c /dev/net/tun ]; then
@@ -9,20 +11,17 @@ if [ ! -c /dev/net/tun ]; then
 	mknod /dev/net/tun c 10 200
 fi
 
-# install or update openvpn-as
-if [[ $(find /config -type f | wc -l) -eq 0 ]]; then
-	cp -r /usr/local/openvpn_as/* /config/
-fi
-
+cp -r /usr/local/openvpn_as/* /config/
 rm -rf /usr/local/openvpn_as
 ln -s /config /usr/local/openvpn_as
-if [ ! -f /config/etc/as.conf ]; then
+sed -i \
+	-e 's#=openvpn_as#=xuser#g' \
+	-e 's#~/tmp#/openvpn/tmp#g' \
+	-e 's#~/sock#/openvpn/sock#g' \
+	/usr/local/openvpn_as/etc/as_templ.conf
+
+if [[ ! -f /config/etc/as.conf || $(wc -l </config/etc/as.conf) -eq 0 ]]; then
 	echo "Init openvpn-as for the first time"
-	sed -i \
-		-e 's#=openvpn_as#=xuser#g' \
-		-e 's#~/tmp#/openvpn/tmp#g' \
-		-e 's#~/sock#/openvpn/sock#g' \
-		/usr/local/openvpn_as/etc/as_templ.conf
 	NOASCONFIG='DELETE\n'
 	ASCONFIG='yes\nyes\n1\nrsa\n2048\nrsa\n2048\n943\n443\nyes\nyes\nyes\nyes\n\n\n'
 

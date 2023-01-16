@@ -31,10 +31,11 @@ RUN \
     /var/tmp/* \
     /var/log/* \
     #Delete openvpn related config files
+    /usr/local/openvpn_as/init.log \
     /usr/local/openvpn_as/etc/db/* \
     /usr/local/openvpn_as/etc/as.conf \
     /usr/local/openvpn_as/etc/web-ssl/* \
-    /usr/local/openvpn_as/init.log
+    /usr/local/openvpn_as/log
 
 #Copy S6 service files
 COPY /root /
