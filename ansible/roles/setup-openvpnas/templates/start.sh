@@ -14,8 +14,9 @@ else
 	CONFIG_PATH="${XSERVER_DATA_PATH}"/"${CONTAINER_NAME}"
 fi
 
-if [[ ! -d "${CONFIG_PATH}"/config ]]; then
-	mkdir -p "${CONFIG_PATH}"/config
+mkdir -p "${CONFIG_PATH}"{/config,/config/log,/config/etc/db,/config/etc/web-ssl}
+if [[ ! -f  "${CONFIG_PATH}"/config/etc/as.conf ]]; then
+    touch "${CONFIG_PATH}"/config/etc/as.conf
 fi
 
 {% if user_id.stdout is defined %}
@@ -81,6 +82,9 @@ podman run -d \
 {% else %}
 	-p 1194:1194/udp \
 {% endif %}
-	-v "${CONFIG_PATH}"/config:/config:Z \
+	-v "${CONFIG_PATH}"/config/log:/config/log:Z \
+	-v "${CONFIG_PATH}"/config/etc/as.conf:/config/etc/as.conf:Z \
+	-v "${CONFIG_PATH}"/config/etc/db:/config/etc/db:Z \
+	-v "${CONFIG_PATH}"/config/etc/web-ssl:/config/etc/web-ssl:Z \
 	--restart always \
 	localhost/xs-openvpn-as:latest
