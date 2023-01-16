@@ -170,6 +170,13 @@ if ip link add dev test type wireguard; then
 				generate_confs
 				save_vars
 			else
+				# Update default interface in iptable rules
+				DEFAULT_INTERFACE="$(ip route | grep "default" | awk '{print $5}')"
+				DEF_POST_UP_RULE="$(cat /config/templates/server.conf | grep PostUp)"
+				DEF_POST_DOWN_RULE="$(cat /config/templates/server.conf | grep PostDown)"
+				sed -i -e "s/PostUp.*/${DEF_POST_UP_RULE}/g" /config/wg0.conf
+				sed -i -e "s/PostDown.*/${DEF_POST_DOWN_RULE}/g" /config/wg0.conf
+				sed -i -e "s/eth+/${DEFAULT_INTERFACE}/g" /config/wg0.conf
 				echo "**** No changes to parameters. Existing configs are used. ****"
 			fi
 		fi
