@@ -22,6 +22,7 @@
     tasks_from: root_containers
   vars:
     xserver_name: "wireguard"
+    xserver_image: "{{ xserver_wireguard }}"
     xs_rootless: "{{ wg_rootless }}"
     xs_force_update: "{{ wg_force_update }}"
   when: not wg_rootless|bool

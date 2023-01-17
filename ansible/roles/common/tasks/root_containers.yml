@@ -1,7 +1,7 @@
 ---
 - name: "Check {{ xserver_name }} image exists"
   podman_image_info:
-    name: "{{ xserver_wireguard }}"
+    name: "{{ xserver_image }}"
   become: true
   register: image_info
   ignore_errors: true

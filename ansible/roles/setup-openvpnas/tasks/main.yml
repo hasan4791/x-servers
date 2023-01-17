@@ -22,6 +22,7 @@
     tasks_from: root_containers
   vars:
     xserver_name: "openvpn-as"
+    xserver_image: "{{ xserver_openvpnas }}"
     xs_rootless: "{{ ov_rootless }}"
     xs_force_update: "{{ ov_force_update }}"
   when: not ov_rootless|bool
