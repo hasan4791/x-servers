@@ -1,0 +1,60 @@
+---
+- name: "Check {{ xserver_name }} image exists"
+  podman_image_info:
+    name: "{{ xserver_wireguard }}"
+  become: true
+  register: image_info
+  ignore_errors: true
+
+- name: "Build {{ xserver_name }} image"
+  command:
+    cmd: ./build.sh "{{ xserver_target_arch }}" "{{ xserver_name }}"
+    chdir: "{{ xserver_root }}/x-servers"
+  become: true
+  register: image_build
+  until: image_build is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: image_info is not skipped and (image_info.images|length == 0 or xs_force_update|bool)
+
+- name: "Check {{ xserver_name }} container status"
+  containers.podman.podman_container_info:
+    name: "{{ xserver_name }}"
+  become: true
+  register: container_status
+  until: container_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: "Stop & Remove rootful {{ xserver_name }} Server"
+  containers.podman.podman_container:
+    name: "{{ xserver_name }}"
+    state: absent
+  become: true
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: image_build is not skipped or (container_status.containers|length != 0 and not container_status.containers[0].State.Running|bool)
+
+- name: "Stop & Remove rootless {{ xserver_name }} Server"
+  containers.podman.podman_container:
+    name: "{{ xserver_name }}"
+    state: absent
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: "Start {{ xserver_name }} Server"
+  command:
+    cmd: ./start.sh
+    chdir: "{{ xserver_root }}/x-servers/{{ xserver_name }}"
+  become: true
+  environment:
+    XSERVER_DATA_PATH: "{{ xserver_data }}/x-servers-data"
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: image_build is not skipped or not (container_status.containers|length != 0 and container_status.containers[0].State.Running|bool)

@@ -1,0 +1,14 @@
+---
+- name: Check prerequisite for rootless container (container_use_devices)
+  command: getsebool container_use_devices
+  become: true
+  register: sebool_status
+  until: sebool_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: '(xserver_rootless|bool or ov_rootless|bool) and (xserver_install == "all" or "openvpn-as" in xserver_install)'
+
+- name: Fail on sebool_status off
+  fail:
+    msg: "Rootless Openvpn-AS needs \"container_use_devices\" to be enabled"
+  when: 'sebool_status is not skipped and "off" in sebool_status.stdout' 
