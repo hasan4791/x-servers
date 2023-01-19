@@ -70,6 +70,20 @@
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
 
+- name: "Fetch selinux policy list"
+  command: semodule -l
+  become: true
+  register: sepolicy_list
+  until: sepolicy_list is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: xs_custom_policy is defined and not xs_force_update
+
+- name: Apply custom selinux policy
+  include: xs_custom_sepolicy.yml
+  become: true
+  when: xs_custom_policy is defined and (xs_force_update or xs_custom_policy not in sepolicy_list.stdout)
+
 - name: "Start {{ xserver_name }} Server"
   command:
     cmd: ./start.sh

@@ -1,0 +1,30 @@
+---
+- name: Cleanup modules
+  command: rm -rf "/tmp/{{ xs_custom_policy }}.mod {{ xserver_root }}/x-servers-data/custom-sepolicy/{{ xs_custom_policy }}.pp"
+
+- name: "Copy {{ xs_custom_policy }} file"
+  copy:
+    src: "files/{{ xs_custom_policy }}.te"
+    dest: "{{ xserver_root }}/x-servers-data/custom-sepolicy/{{ xs_custom_policy }}.te"
+    owner: opc
+    group: opc
+    mode: 0644
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: "Check module {{ xs_custom_policy }}"
+  command: checkmodule -M -m -o "/tmp/{{ xs_custom_policy }}.mod" "{{ xserver_root }}/x-servers-data/custom-sepolicy/{{ xs_custom_policy }}.te"
+  register: xs_module_status
+
+- name: "Compile module {{ xs_custom_policy }}"
+  command: semodule_package -o "{{ xserver_root }}/x-servers-data/custom-sepolicy/{{ xs_custom_policy }}.pp" -m "/tmp/{{ xs_custom_policy }}.mod"
+  register: xs_module_status
+
+- name: "Update selinux policy {{ xs_custom_policy }}"
+  command: semodule -i "{{ xserver_root }}/x-servers-data/custom-sepolicy/{{ xs_custom_policy }}.pp"
+  register: xs_module_status
+
+- name: Cleanup modules
+  command: rm -rf "/tmp/{{ xs_custom_policy }}.mod"

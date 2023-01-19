@@ -1,0 +1,12 @@
+module xs-openvpnas-policy 1.0;
+
+require {
+        type tun_tap_device_t;
+        type container_t;
+        class chr_file { append getattr ioctl lock open read write };
+}
+
+#============= container_t ==============
+
+#!!!! This avc is allowed to use tun device in rootless containers
+allow container_t tun_tap_device_t:chr_file { append getattr ioctl lock open read write };

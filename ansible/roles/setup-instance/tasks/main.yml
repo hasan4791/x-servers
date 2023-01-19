@@ -48,9 +48,9 @@
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
 
-- name: Update modules
-  copy:
-    src: files/x-server-modules.conf
+- name: Load required modules
+  template:
+    src: x-server-modules.conf.j2
     dest: /etc/modules-load.d/x-server-modules.conf
     owner: root
     group: root
@@ -59,27 +59,6 @@
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: xserver_install == "all" or xserver_install == "openvpnas"
-
-- name: Openvpn specific modules
-  lineinfile:
-    path: /etc/modules-load.d/x-server-modules.conf
-    line: 'tun'
-  register: task_status
-  until: task_status is successful
-  retries: "{{ task_retries | int }}"
-  delay: "{{ task_delay | int }}"
-  when: xserver_install == "all" or xserver_install == "openvpnas"
-
-- name: Wireguard specific modules
-  lineinfile:
-    path: /etc/modules-load.d/x-server-modules.conf
-    line: 'wireguard'
-  register: task_status
-  until: task_status is successful
-  retries: "{{ task_retries | int }}"
-  delay: "{{ task_delay | int }}"
-  when: xserver_install == "all" or xserver_install == "wireguard"
 
 - name: Update sysctl
   copy:
