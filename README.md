@@ -18,7 +18,7 @@ Podman
 
 ## Container Modes
 1. Root Containers
-2. Rootless Containers(partially working)
+2. Rootless Containers
 
 
 ## Contributing
