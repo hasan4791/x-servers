@@ -10,8 +10,11 @@
 
 - name: Create xserver data directory
   file:
-    path: "{{ xserver_data }}/x-servers-data"
+    path: "{{ xserver_root }}/{{ item.name }}"
     state: directory
+  with_items:
+    - {name: 'x-servers-data'}
+    - {name: 'x-servers-data/custom-sepolicy'}
   register: task_status
   until: task_status is successful
   retries: "{{ task_retries | int }}"

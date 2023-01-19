@@ -1,0 +1,17 @@
+module xs-openvpnas-policy 1.0;
+
+require {
+        type kernel_t;
+        type tun_tap_device_t;
+        type container_t;
+        class system module_request;
+        class chr_file { append getattr ioctl lock open read write };
+}
+
+#============= container_t ==============
+
+#!!!! This avc is allowed for iptables to load the extension
+allow container_t kernel_t:system module_request;
+
+#!!!! This avc is allowed to use tun device in rootless containers
+allow container_t tun_tap_device_t:chr_file { append getattr ioctl lock open read write };

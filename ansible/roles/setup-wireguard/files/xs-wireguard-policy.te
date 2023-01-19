@@ -1,0 +1,12 @@
+module xs-wireguard-policy 1.0;
+
+require {
+        type kernel_t;
+        type container_t;
+        class system module_request;
+}
+
+#============= container_t ==============
+
+#!!!! This avc is allowed for iptables to load the extension
+allow container_t kernel_t:system module_request;
