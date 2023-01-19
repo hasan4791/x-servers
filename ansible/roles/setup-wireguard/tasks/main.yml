@@ -36,5 +36,4 @@
     xserver_image: "{{ xserver_wireguard }}"
     xs_rootless: "{{ wg_rootless }}"
     xs_force_update: "{{ wg_force_update }}"
-    xs_custom_policy: "xs-wireguard-policy"
   when: wg_rootless|bool

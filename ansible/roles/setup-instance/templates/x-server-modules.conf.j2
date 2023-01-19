@@ -1,0 +1,17 @@
+br_netfilter
+{% if xserver_install == "all" or "openvpn-as" in xserver_install or "wireguard" in xserver_install %}
+ip_tables
+iptable_filter
+iptable_nat
+{% endif %}
+{% if xserver_install == "all" or "openvpn-as" in xserver_install %}
+tun
+xt_mark
+xt_conntrack
+xt_state
+xt_nat
+{% endif %}
+{% if xserver_install == "all" or "wireguard" in xserver_install %}
+wireguard
+xt_MASQUERADE
+{% endif %}
