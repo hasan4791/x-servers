@@ -46,6 +46,6 @@ for server in ${BUILD_SERVERS}; do
 		--build-arg ANSIBLE_CORE_VERSION="${ANSIBLE_CORE_VERSION}" \
 		--build-arg COREDNS_VERSION="${COREDNS_VERSION}" \
 		-t "${XSERVER_REGISTRY}"/"${XSERVER_IMG[$server]}" \
-		-f "$server"/Dockerfile \
+		-f "$server"/Containerfile \
 		"$server"/.
 done
