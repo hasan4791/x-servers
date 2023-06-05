@@ -24,8 +24,8 @@ fi
 
 if [ "$(podman ps -a --format "{{.Names}}" | wc -l)" -eq 0 ]; then
 	echo "No containers are running"
-	rm -f /tmp/lock
-	exit 0
+	node_update
+	node_reboot
 fi
 XSERVERS=$(podman ps -a --format "{{.Names}}")
 XSERVER_IMG="baseimage-ubuntu ${XSERVERS}"
@@ -63,6 +63,29 @@ start_containers() {
 	done
 }
 
+node_update() {
+	if [ "$EUID" -eq 0 ]; then
+		if grep -qi "fedora" </etc/os-release; then
+			dnf update -y
+			dnf upgrade -y
+		elif grep -qi "debian" </etc/os-release; then
+			apt-get update -y
+			apt-get upgrade -y
+		fi
+	fi
+}
+
+node_reboot() {
+	rm -f /tmp/lock
+
+	#Reboot node
+	if [ "$EUID" -eq 0 ]; then
+		echo "System will reboot in 60 Seconds" | wall
+		sleep 60
+		reboot
+	fi
+}
+
 #trap on failure
 trap handle_failure EXIT SIGTERM SIGINT
 
@@ -75,13 +98,7 @@ for server in ${XSERVERS}; do
 done
 
 #Update node packages
-if [ "$EUID" -eq 0 ] && grep -qi "fedora" </etc/os-release; then
-	dnf update -y
-	dnf upgrade -y
-elif grep -qi "debian" </etc/os-release; then
-	apt-get update -y
-	apt-get upgrade -y
-fi
+node_update
 
 #Update container images
 cd "${XSERVER_PATH}"
@@ -105,11 +122,5 @@ if [ ! -z "${SLACK_URL}" ]; then
 	send_slack_notification "success"
 fi
 
-rm -f /tmp/lock
-
-#Reboot node
-if [ "$EUID" -eq 0 ]; then
-	echo "System will reboot in 60 Seconds" | wall
-	sleep 60
-	reboot
-fi
+#Remove lock & Reboot node
+node_reboot

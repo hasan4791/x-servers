@@ -19,7 +19,7 @@
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
 
-# Rootful Mode
+# Rootful Mode runs every Sunday 00:00
 - name: Root cronjob parameters
   set_fact:
     xs_cron_schedule: "0 0 * * 0"
@@ -36,10 +36,10 @@
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
 
-# Rootless Mode
+# Rootless Mode runs every Sunday 00:30
 - name: Rootless cronjob parameters
   set_fact:
-    xs_cron_schedule: "1 0 * * 0"
+    xs_cron_schedule: "30 0 * * 0"
     xs_cron_user: "{{ xserver_host_non_root_user }}"
 
 - name: Copy cronjob script
