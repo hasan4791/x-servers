@@ -53,6 +53,7 @@ podman run -d \
 {% else %}
 	-e TZ=Asia/Kolkata \
 {% endif %}
+{% if wg_mode is not defined or wg_mode == "server" %}
 {% if wg_server_url is defined %}
 	-e SERVERURL={{ wg_server_url }} \
 {% else %}
@@ -83,12 +84,27 @@ podman run -d \
 {% else %}
 	-e ALLOWEDIPS=0.0.0.0/0 \
 {% endif %}
+{% if wg_keepalive is defined %}
+	-e PERSISTENTKEEPALIVE_PEERS={{ wg_keepalive }} \
+{% endif %}
+	-p 51820:51820/udp \
+{% endif %}
 {% if wg_log_confs is defined %}
 	-e LOG_CONFS={{ wg_log_confs|bool }} \
 {% else %}
 	-e LOG_CONFS=true \
 {% endif %}
-	-p 51820:51820/udp \
 	-v "${CONFIG_PATH}"/config:/config:Z \
+{% if wg_mode == "client" %}
+	--sysctl="net.ipv4.conf.all.src_valid_mark=1" \
+{% endif %}
 	--restart always \
 	localhost/xs-wireguard:latest
+
+{% if xserver_os is defined and xserver_os == "pios11" %}
+SVC="container-wireguard.service"
+systemctl disable "${SVC}"
+rm -rf /lib/systemd/system/"${SVC}"
+podman generate systemd --name wireguard --restart-policy no > /lib/systemd/system/"${SVC}"
+systemctl enable "${SVC}"
+{% endif %}

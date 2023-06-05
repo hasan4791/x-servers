@@ -13,7 +13,7 @@
 
 - name: "Archive {{ xserver_name }} files"
   archive:
-    path: "/x-servers/{{ xserver_name }}"
+    path: "{{ xserver_project_root }}/{{ xserver_name }}"
     dest: "/tmp/{{ xserver_name }}.tgz"
     format: gz
   delegate_to: 127.0.0.1

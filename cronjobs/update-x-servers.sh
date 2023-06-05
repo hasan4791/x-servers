@@ -75,9 +75,12 @@ for server in ${XSERVERS}; do
 done
 
 #Update node packages
-if [ "$EUID" -eq 0 ]; then
+if [ "$EUID" -eq 0 ] && grep -qi "fedora" </etc/os-release; then
 	dnf update -y
 	dnf upgrade -y
+elif grep -qi "debian" </etc/os-release; then
+	apt-get update -y
+	apt-get upgrade -y
 fi
 
 #Update container images

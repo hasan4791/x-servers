@@ -22,7 +22,7 @@
 
 - name: Archive server files
   archive:
-    path: /x-servers/baseimage-ubuntu
+    path: "{{ xserver_project_root }}/baseimage-ubuntu"
     dest: /tmp/baseimage-ubuntu.tgz
     format: gz
   delegate_to: 127.0.0.1
@@ -42,7 +42,7 @@
 
 - name: Copy build script
   copy:
-    src: /x-servers/build.sh
+    src: "{{ xserver_project_root }}/build.sh"
     dest: "{{ xserver_root }}/x-servers/"
     mode: preserve
   register: task_status
@@ -55,6 +55,34 @@
     bs_force_update: true
   when: xserver_force_update|bool or ov_force_update|bool or wg_force_update|bool
 
+- name: Check rootless deployment
+  set_fact:
+    xs_rootless_container: true
+  when: xserver_rootless|bool or wg_rootless|bool or ov_rootless|bool
+
+- name: Check rootful deployment
+  set_fact:
+    xs_root_container: true
+  when: 'not (xserver_rootless|bool and xs_rootless_container|bool)'
+
+- name: copy image shortnames script
+  copy:
+    src: image-shortnames.sh
+    dest: /tmp/image-shortnames.sh
+    mode: preserve
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: Append image shortnames
+  shell: /tmp/image-shortnames.sh
+  become: true
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
 # Rootful Mode
 - name: Check image exists
   podman_image_info:
@@ -62,6 +90,7 @@
   become: true
   register: image_info
   ignore_errors: true
+  when: xs_root_container|bool
 
 - name: Build image if not exists
   command:
@@ -72,7 +101,7 @@
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: image_info.images|length == 0 or bs_force_update|bool
+  when: 'xs_root_container|bool and (image_info.images|length == 0 or bs_force_update|bool)'
 
 # Rootless Mode
 - name: Check image exists
@@ -80,6 +109,7 @@
     name: "{{ xserver_baseimage }}"
   register: image_info
   ignore_errors: true
+  when: xs_rootless_container|bool
 
 - name: Build image if not exists
   command:
@@ -89,4 +119,4 @@
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: image_info.images|length == 0 or bs_force_update|bool
+  when: 'xs_rootless_container|bool and (image_info.images|length == 0 or bs_force_update|bool)'

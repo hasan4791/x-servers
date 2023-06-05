@@ -1,7 +1,7 @@
 ---
 - name: Archive server files
   archive:
-    path: /x-servers/cronjobs
+    path: "{{ xserver_project_root }}/cronjobs"
     dest: /tmp/cronjobs.tgz
     format: gz
   delegate_to: 127.0.0.1

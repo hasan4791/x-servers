@@ -77,11 +77,20 @@ DUDE
 				echo "Adding ${!SERVER_ALLOWEDIPS} to wg0.conf's AllowedIPs for peer ${i}"
 				cat <<DUDE >>/config/wg0.conf
 AllowedIPs = ${CLIENT_IP}/32,${!SERVER_ALLOWEDIPS}
-
 DUDE
 			else
 				cat <<DUDE >>/config/wg0.conf
 AllowedIPs = ${CLIENT_IP}/32
+DUDE
+			fi
+			# add PersistentKeepalive if the peer is specified
+			if [[ -n "${PERSISTENTKEEPALIVE_PEERS_ARRAY}" ]] && ([[ "${PERSISTENTKEEPALIVE_PEERS_ARRAY[0]}" = "all" ]] || printf '%s\0' "${PERSISTENTKEEPALIVE_PEERS_ARRAY[@]}" | grep -Fxqz -- "${i}"); then
+				cat <<DUDE >>/config/wg0.conf
+PersistentKeepalive = 25
+
+DUDE
+			else
+				cat <<DUDE >>/config/wg0.conf
 
 DUDE
 			fi
@@ -104,6 +113,7 @@ ORIG_PEERDNS="$PEERDNS"
 ORIG_PEERS="$PEERS"
 ORIG_INTERFACE="$INTERFACE"
 ORIG_ALLOWEDIPS="$ALLOWEDIPS"
+ORIG_PERSISTENTKEEPALIVE_PEERS="$PERSISTENTKEEPALIVE_PEERS"
 DUDE
 }
 

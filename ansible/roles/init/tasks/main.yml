@@ -6,9 +6,9 @@
   until: sebool_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: '(xserver_rootless|bool or ov_rootless|bool) and (xserver_install == "all" or "openvpn-as" in xserver_install)'
+  when: '(xserver_rootless|bool or ov_rootless|bool) and (xserver_install == "all" or "openvpn-as" in xserver_install) and "pios11" not in xserver_os'
 
 - name: Fail on sebool_status off
   fail:
     msg: "Rootless Openvpn-AS needs \"container_use_devices\" to be enabled"
-  when: 'sebool_status is not skipped and "off" in sebool_status.stdout' 
+  when: 'sebool_status is not skipped and "off" in sebool_status.stdout and "pios11" not in xserver_os'
