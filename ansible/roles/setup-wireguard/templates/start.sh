@@ -80,12 +80,14 @@ podman run -d \
 	-e INTERNAL_SUBNET=172.32.1.0 \
 {% endif %}
 {% if wg_allowed_ips is defined %}
-	-e ALLOWEDIPS={{ wg_allowed_ips|ipaddr('address') }} \
+	-e ALLOWEDIPS={{ wg_allowed_ips|ipaddr('net') }} \
 {% else %}
 	-e ALLOWEDIPS=0.0.0.0/0 \
 {% endif %}
-{% if wg_keepalive is defined %}
-	-e PERSISTENTKEEPALIVE_PEERS={{ wg_keepalive }} \
+{% if wg_keepalive_peers is defined %}
+	-e PERSISTENTKEEPALIVE_PEERS={{ wg_keepalive_peers }} \
+{% else %}
+    -e PERSISTENTKEEPALIVE_PEERS="all" \
 {% endif %}
 	-p 51820:51820/udp \
 {% endif %}
