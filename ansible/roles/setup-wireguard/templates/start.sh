@@ -104,9 +104,25 @@ podman run -d \
 	localhost/xs-wireguard:latest
 
 {% if xserver_os is defined and xserver_os == "pios11" %}
-SVC="container-wireguard.service"
-systemctl disable "${SVC}"
-rm -rf /lib/systemd/system/"${SVC}"
-podman generate systemd --name wireguard --restart-policy no > /lib/systemd/system/"${SVC}"
-systemctl enable "${SVC}"
+SVC="container-{{ xserver_name }}.service"
+if [ "$EUID" -ne 0 ]; then
+set +e
+    systemctl --user stop "${SVC}"
+    systemctl --user disable "${SVC}"
+set -e
+    mkdir -p ~/.config/systemd/user/
+    rm -rf ~/.config/systemd/user/"${SVC}"
+    podman generate systemd --name wireguard --restart-policy no > ~/.config/systemd/user/"${SVC}"
+    systemctl --user enable "${SVC}"
+    systemctl --user daemon-reload
+else
+set +e
+    systemctl stop "${SVC}"
+    systemctl disable "${SVC}"
+set -e
+    rm -rf /lib/systemd/system/"${SVC}"
+    podman generate systemd --name wireguard --restart-policy no > /lib/systemd/system/"${SVC}"
+    systemctl enable "${SVC}"
+    systemctl daemon-reload
+fi
 {% endif %}

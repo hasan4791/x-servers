@@ -26,6 +26,42 @@
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
 
+- name: "Stop & Disable {{ xserver_name }} restart service"
+  systemd:
+    name: "container-{{ xserver_name }}"
+    state: stopped
+    enabled: false
+  become: true
+  register: service_status
+  failed_when:
+    - service_status.failed == true
+    - '"Could not find the requested service" not in service_status.msg'
+  until: service_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: '"pios11" in xserver_os and (image_build is not skipped or (container_status.containers|length != 0 and not container_status.containers[0].State.Running|bool))'
+
+- name: "Remove {{ xserver_name }} restart service"
+  file:
+    path: "/lib/systemd/system/container-{{ xserver_name }}.service"
+    state: absent
+  become: true
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: '"pios11" in xserver_os and (image_build is not skipped or (container_status.containers|length != 0 and not container_status.containers[0].State.Running|bool))'
+
+- name: "Reload systemd daemon"
+  systemd:
+    daemon_reload: true
+  become: true
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: '"pios11" in xserver_os and (image_build is not skipped or (container_status.containers|length != 0 and not container_status.containers[0].State.Running|bool))'
+
 - name: "Stop & Remove rootful {{ xserver_name }} Server"
   containers.podman.podman_container:
     name: "{{ xserver_name }}"
@@ -36,6 +72,41 @@
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
   when: image_build is not skipped or (container_status.containers|length != 0 and not container_status.containers[0].State.Running|bool)
+
+- name: "Stop & Disable rootless {{ xserver_name }} restart service"
+  systemd:
+    name: "container-{{ xserver_name }}"
+    state: stopped
+    enabled: false
+    scope: user
+  register: service_status
+  failed_when:
+    - service_status.failed == true
+    - '"Could not find the requested service" not in service_status.msg'
+  until: service_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: '"pios11" in xserver_os'
+
+- name: "Remove {{ xserver_name }} restart service"
+  file:
+    path: "~/.config/systemd/user/container-{{ xserver_name }}.service"
+    state: absent
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: '"pios11" in xserver_os'
+
+- name: "Reload systemd daemon"
+  systemd:
+    daemon_reload: true
+    scope: user
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: '"pios11" in xserver_os'
 
 - name: "Stop & Remove rootless {{ xserver_name }} Server"
   containers.podman.podman_container:
@@ -69,19 +140,18 @@
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: '"pios11" in xserver_os'
+  when: '"pios11" in xserver_os and (image_build is not skipped or not (container_status.containers|length != 0 and container_status.containers[0].State.Running|bool))'
 
 - name: "Enable {{ xserver_name }} restart service"
   systemd:
     name: "container-{{ xserver_name }}"
-    daemon_reload: true
     enabled: true
   become: true
   register: task_status
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: '"pios11" in xserver_os'
+  when: '"pios11" in xserver_os and (image_build is not skipped or not (container_status.containers|length != 0 and container_status.containers[0].State.Running|bool))'
 
 - name: "Reload systemd daemon"
   systemd:
@@ -91,4 +161,4 @@
   until: task_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: '"pios11" in xserver_os'
+  when: '"pios11" in xserver_os and (image_build is not skipped or not (container_status.containers|length != 0 and container_status.containers[0].State.Running|bool))'

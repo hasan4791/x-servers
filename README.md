@@ -27,6 +27,7 @@ Podman
 - Slack notification about the updates
 - Root & Rootless container support for all servers
 - Deployment of servers on Raspberry pi. Tested on Raspberry Pi 3B+ with Official os 11(Bullseye). Should work on other models as well.
+
 ## Deployment
 
 To deploy this project on x86 hosts
@@ -51,6 +52,18 @@ ansible-playbook -i <path_to_inventory_file>, setup-xserver.yml -u <non-root-use
 ```
 
 Currently shell scripts are used for deployment which in future can be moved to kubernetes based resources like deploy/pod yaml.
+
+## Note
+1. Rootless openvpn-as server requires "container_use_devices" sebool to be enabled
+```bash
+sudo setsebool -P container_use_devices on
+```
+2. Rootless openvpn-as server also needs [this](https://github.com/hasan4791/x-servers/blob/main/ansible/roles/setup-openvpnas/files/xs-openvpnas-policy.te) custom selinux module to allow "tun_tap_devices" for containers
+3. Rootless Wireguard server requries MTU value to be updated in containers.conf for slirp4netns
+```bash
+echo "network_cmd_options=[\"mtu=1500\"]" | sudo tee -a /usr/share/containers/containers.conf
+```
+
 ## Contributing
 
 Contributions & Suggestions are always welcome :)
