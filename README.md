@@ -63,6 +63,7 @@ sudo setsebool -P container_use_devices on
 ```bash
 echo "network_cmd_options=[\"mtu=1500\"]" | sudo tee -a /usr/share/containers/containers.conf
 ```
+4. The default interface used in Rootless containers are "tap" interfaces and so any iptable rules that needs to be updated should point to this interface rather than the generic "eth"  type.
 
 ## Contributing
 
