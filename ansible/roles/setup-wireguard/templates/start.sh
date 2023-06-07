@@ -113,6 +113,9 @@ set -e
     mkdir -p ~/.config/systemd/user/
     rm -rf ~/.config/systemd/user/"${SVC}"
     podman generate systemd --name wireguard --restart-policy no > ~/.config/systemd/user/"${SVC}"
+    sed -i -e "/ExecStop=/d" ~/.config/systemd/user/"${SVC}"
+    sed -i -e "/ExecStopPost=/d" ~/.config/systemd/user/"${SVC}"
+    sed -i -e "/PIDFile=/d" ~/.config/systemd/user/"${SVC}"
     systemctl --user enable "${SVC}"
     systemctl --user daemon-reload
 else
@@ -122,6 +125,9 @@ set +e
 set -e
     rm -rf /lib/systemd/system/"${SVC}"
     podman generate systemd --name wireguard --restart-policy no > /lib/systemd/system/"${SVC}"
+    sed -i -e "/ExecStop=/d" /lib/systemd/system/"${SVC}"
+    sed -i -e "/ExecStopPost=/d" /lib/systemd/system/"${SVC}"
+    sed -i -e "/PIDFile=/d" /lib/systemd/system/"${SVC}"
     systemctl enable "${SVC}"
     systemctl daemon-reload
 fi
