@@ -8,10 +8,10 @@
   vars_files:
     - var_xservers.yml
   roles:
+    - role: init
     # Run this role as priviledges user
     - role: setup-instance
       become: true
-    - role: init
     - role: setup-baseimage
       when: xserver_install != "none"
     - role: setup-openvpnas
