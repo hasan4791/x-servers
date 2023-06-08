@@ -10,7 +10,7 @@
     - var_xservers.yml
   roles:
     - role: init
-    # Run this role as priviledges user
+    # Run this role as privileged user
     - role: setup-instance
       become: true
       when: xs_host_update|bool
