@@ -3,6 +3,7 @@
   pre_tasks:
   - set_fact:
       bs_force_update: false
+      xs_host_update: true
       xs_root_container: false
       xs_rootless_container: false
   vars_files:
@@ -12,6 +13,7 @@
     # Run this role as priviledges user
     - role: setup-instance
       become: true
+      when: xs_host_update|bool
     - role: setup-baseimage
       when: xserver_install != "none"
     - role: setup-openvpnas

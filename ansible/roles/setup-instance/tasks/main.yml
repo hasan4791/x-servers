@@ -114,6 +114,15 @@
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
 
+- name: Create host deps file
+  file:
+    path: ~/.xs_host_done
+    state: "touch"
+  register: task_status
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
 - name: Reboot server
   reboot:
     post_reboot_delay: 60

@@ -46,6 +46,9 @@ xserver_slack_url: ""
 # Force update/deploy all the servers
 # by building new container image
 xserver_force_update: false
+# Force update target host dependencies and
+# configs
+xserver_force_update_host: false
 # Deploy servers as rootless containers
 xserver_rootless: false
 # User to be created on target host which will
@@ -110,7 +113,8 @@ wg_internal_subnet: "172.32.1.0"
 wg_allowed_ips: "0.0.0.0/0"
 # Generates QRCode configs on container logs
 wg_log_confs: false
-# Persistent keepalive configuraion fo Wireguard
+# Persistent keepalive configuraion of 25s
+# for Wireguard
 wg_keepalive_peers: "all"
 # For detailed explanation, refer here
 # https://github.com/linuxserver/docker-wireguard/blob/master/README.md

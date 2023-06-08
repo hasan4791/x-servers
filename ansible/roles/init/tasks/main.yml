@@ -1,4 +1,18 @@
 ---
+- name: Check host deps are updated
+  stat:
+    path: ~/.xs_host_done
+  register: file_status
+  become: true
+  until: file_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: Check file exists
+  set_fact:
+    xs_host_update: false
+  when: file_status.stat.exists and not xserver_force_update_host|bool
+
 - name: Check prerequisite for rootless container (container_use_devices)
   command: getsebool container_use_devices
   become: true
