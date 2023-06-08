@@ -59,7 +59,7 @@ Currently shell scripts are used for deployment which in future can be moved to 
 sudo setsebool -P container_use_devices on
 ```
 2. Rootless openvpn-as server also needs [this](https://github.com/hasan4791/x-servers/blob/main/ansible/roles/setup-openvpnas/files/xs-openvpnas-policy.te) custom selinux module to allow "tun_tap_devices" for containers
-3. Rootless Wireguard server requries MTU value to be updated in containers.conf for slirp4netns
+3. Rootless Wireguard server requires MTU value to be updated in containers.conf for slirp4netns
 ```bash
 echo "network_cmd_options=[\"mtu=1500\"]" | sudo tee -a /usr/share/containers/containers.conf
 ```
