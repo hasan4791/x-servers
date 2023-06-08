@@ -38,3 +38,18 @@
     timeout: 5
   delegate_to: 127.0.0.1
   when: 'not (xserver_rootless|bool or ov_rootless|bool) and sebool_status is not skipped and "on" in sebool_status.stdout and "pios11" not in xserver_os'
+
+- name: Check force update
+  set_fact:
+    bs_force_update: true
+  when: xserver_force_update|bool or ov_force_update|bool or wg_force_update|bool
+
+- name: Check rootless deployment
+  set_fact:
+    xs_rootless_container: true
+  when: xserver_rootless|bool or wg_rootless|bool or ov_rootless|bool
+
+- name: Check rootful deployment
+  set_fact:
+    xs_root_container: true
+  when: 'not (xserver_rootless|bool and xs_rootless_container|bool)'
