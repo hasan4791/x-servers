@@ -31,12 +31,13 @@ CONTAINER_GROUP="1000"
 if [ "${CONTAINER_MODE}" == "rootless" ]; then
 	# In rootless mode, container root user
 	# is mapped to host's non-root user
-{% if xserver_container_non_root_uid is defined %}
-	CONTAINER_USER={{ xserver_container_non_root_uid }}
+{% if xserver_container_non_root_id is defined %}
+	CONTAINER_USER={{ xserver_container_non_root_id }}
+	CONTAINER_GROUP={{ xserver_container_non_root_id }}
 {% else %}
 	CONTAINER_USER=0
-{% endif %}
 	CONTAINER_GROUP=0
+{% endif %}
 fi
 
 # Run container in podman with
@@ -53,6 +54,7 @@ podman run -d \
 {% else %}
 	-e TZ=Asia/Kolkata \
 {% endif %}
+{% if wg_mode is not defined or wg_mode == "server" %}
 {% if wg_server_url is defined %}
 	-e SERVERURL={{ wg_server_url }} \
 {% else %}
@@ -79,16 +81,55 @@ podman run -d \
 	-e INTERNAL_SUBNET=172.32.1.0 \
 {% endif %}
 {% if wg_allowed_ips is defined %}
-	-e ALLOWEDIPS={{ wg_allowed_ips|ipaddr('address') }} \
+	-e ALLOWEDIPS={{ wg_allowed_ips|ipaddr('net') }} \
 {% else %}
 	-e ALLOWEDIPS=0.0.0.0/0 \
+{% endif %}
+{% if wg_keepalive_peers is defined %}
+	-e PERSISTENTKEEPALIVE_PEERS={{ wg_keepalive_peers }} \
+{% else %}
+    -e PERSISTENTKEEPALIVE_PEERS="all" \
+{% endif %}
+	-p 51820:51820/udp \
 {% endif %}
 {% if wg_log_confs is defined %}
 	-e LOG_CONFS={{ wg_log_confs|bool }} \
 {% else %}
 	-e LOG_CONFS=true \
 {% endif %}
-	-p 51820:51820/udp \
 	-v "${CONFIG_PATH}"/config:/config:Z \
+{% if wg_mode == "client" %}
+	--sysctl="net.ipv4.conf.all.src_valid_mark=1" \
+{% endif %}
 	--restart always \
 	localhost/xs-wireguard:latest
+
+{% if xserver_os is defined and xserver_os == "pios11" %}
+SVC="container-{{ xserver_name }}.service"
+if [ "$EUID" -ne 0 ]; then
+set +e
+    systemctl --user stop "${SVC}"
+    systemctl --user disable "${SVC}"
+set -e
+    mkdir -p ~/.config/systemd/user/
+    rm -rf ~/.config/systemd/user/"${SVC}"
+    podman generate systemd --name wireguard --restart-policy no > ~/.config/systemd/user/"${SVC}"
+    sed -i -e "/ExecStop=/d" ~/.config/systemd/user/"${SVC}"
+    sed -i -e "/ExecStopPost=/d" ~/.config/systemd/user/"${SVC}"
+    sed -i -e "/PIDFile=/d" ~/.config/systemd/user/"${SVC}"
+    systemctl --user enable "${SVC}"
+    systemctl --user daemon-reload
+else
+set +e
+    systemctl stop "${SVC}"
+    systemctl disable "${SVC}"
+set -e
+    rm -rf /lib/systemd/system/"${SVC}"
+    podman generate systemd --name wireguard --restart-policy no > /lib/systemd/system/"${SVC}"
+    sed -i -e "/ExecStop=/d" /lib/systemd/system/"${SVC}"
+    sed -i -e "/ExecStopPost=/d" /lib/systemd/system/"${SVC}"
+    sed -i -e "/PIDFile=/d" /lib/systemd/system/"${SVC}"
+    systemctl enable "${SVC}"
+    systemctl daemon-reload
+fi
+{% endif %}

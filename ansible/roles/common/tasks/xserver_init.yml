@@ -13,7 +13,7 @@
 
 - name: "Archive {{ xserver_name }} files"
   archive:
-    path: "/x-servers/{{ xserver_name }}"
+    path: "{{ xserver_project_root }}/{{ xserver_name }}"
     dest: "/tmp/{{ xserver_name }}.tgz"
     format: gz
   delegate_to: 127.0.0.1
@@ -32,14 +32,14 @@
   delay: "{{ task_delay | int }}"
 
 - name: Fetch non-root user id
-  command: id -u "{{ xserver_host_non_root_user }}"
+  command: id -u "{{ xserver_container_non_root_user }}"
   register: user_id
   until: user_id is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
 
 - name: Fetch non-root group id
-  command: id -g "{{ xserver_host_non_root_group }}"
+  command: id -g "{{ xserver_container_non_root_group }}"
   register: group_id
   until: group_id is successful
   retries: "{{ task_retries | int }}"

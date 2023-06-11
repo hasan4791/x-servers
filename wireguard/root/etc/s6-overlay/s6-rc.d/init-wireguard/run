@@ -15,7 +15,7 @@ DUDE"
 	# Update default interface in iptable rules
 	DEFAULT_INTERFACE="$(ip route | grep "default" | awk '{print $5}')"
 	sed -i -e "s/eth+/${DEFAULT_INTERFACE}/g" /config/wg0.conf
-	for i in ${PEERS_ARRAY[@]}; do
+	for i in "${PEERS_ARRAY[@]}"; do
 		if [[ ! "${i}" =~ ^[[:alnum:]]+$ ]]; then
 			echo "**** Peer ${i} contains non-alphanumeric characters and thus will be skipped. No config for peer ${i} will be generated. ****"
 		else
@@ -24,16 +24,16 @@ DUDE"
 			else
 				PEER_ID="peer_${i}"
 			fi
-			mkdir -p /config/${PEER_ID}
+			mkdir -p "/config/${PEER_ID}"
 			if [ ! -f "/config/${PEER_ID}/privatekey-${PEER_ID}" ]; then
 				umask 077
-				wg genkey | tee /config/${PEER_ID}/privatekey-${PEER_ID} | wg pubkey >/config/${PEER_ID}/publickey-${PEER_ID}
-				wg genpsk >/config/${PEER_ID}/presharedkey-${PEER_ID}
+				wg genkey | tee "/config/${PEER_ID}/privatekey-${PEER_ID}" | wg pubkey >"/config/${PEER_ID}/publickey-${PEER_ID}"
+				wg genpsk >"/config/${PEER_ID}/presharedkey-${PEER_ID}"
 			fi
 			if [ -f "/config/${PEER_ID}/${PEER_ID}.conf" ]; then
-				CLIENT_IP=$(cat /config/${PEER_ID}/${PEER_ID}.conf | grep "Address" | awk '{print $NF}')
+				CLIENT_IP=$(grep "Address" "/config/${PEER_ID}/${PEER_ID}.conf" | awk '{print $NF}')
 				if [ -n "${ORIG_INTERFACE}" ] && [ "${INTERFACE}" != "${ORIG_INTERFACE}" ]; then
-					CLIENT_IP=$(echo "${CLIENT_IP}" | sed "s|${ORIG_INTERFACE}|${INTERFACE}|")
+					CLIENT_IP="${CLIENT_IP//${ORIG_INTERFACE}/${INTERFACE}}"
 				fi
 			else
 				for idx in {2..254}; do
@@ -54,21 +54,21 @@ DUDE"
 				cat <<DUDE >>/config/wg0.conf
 [Peer]
 # ${PEER_ID}
-PublicKey = $(cat /config/${PEER_ID}/publickey-${PEER_ID})
-PresharedKey = $(cat /config/${PEER_ID}/presharedkey-${PEER_ID})
+PublicKey = $(cat "/config/${PEER_ID}/publickey-${PEER_ID}")
+PresharedKey = $(cat "/config/${PEER_ID}/presharedkey-${PEER_ID}")
 DUDE
 			else
 				echo "**** Existing keys with no preshared key found for ${PEER_ID}, creating confs without preshared key for backwards compatibility ****"
 				# create peer conf without presharedkey
 				eval "$(printf %s)
         cat <<DUDE > /config/${PEER_ID}/${PEER_ID}.conf
-$(cat /config/templates/peer.conf | sed '/PresharedKey/d')
+$(sed '/PresharedKey/d' "/config/templates/peer.conf")
 DUDE"
 				# add peer info to server conf without presharedkey
 				cat <<DUDE >>/config/wg0.conf
 [Peer]
 # ${PEER_ID}
-PublicKey = $(cat /config/${PEER_ID}/publickey-${PEER_ID})
+PublicKey = $(cat "/config/${PEER_ID}/publickey-${PEER_ID}")
 DUDE
 			fi
 			SERVER_ALLOWEDIPS=SERVER_ALLOWEDIPS_PEER_${i}
@@ -77,21 +77,30 @@ DUDE
 				echo "Adding ${!SERVER_ALLOWEDIPS} to wg0.conf's AllowedIPs for peer ${i}"
 				cat <<DUDE >>/config/wg0.conf
 AllowedIPs = ${CLIENT_IP}/32,${!SERVER_ALLOWEDIPS}
-
 DUDE
 			else
 				cat <<DUDE >>/config/wg0.conf
 AllowedIPs = ${CLIENT_IP}/32
+DUDE
+			fi
+			# add PersistentKeepalive if the peer is specified
+			if [[ -n "${PERSISTENTKEEPALIVE_PEERS_ARRAY}" ]] && ([[ "${PERSISTENTKEEPALIVE_PEERS_ARRAY[0]}" = "all" ]] || printf '%s\0' "${PERSISTENTKEEPALIVE_PEERS_ARRAY[@]}" | grep -Fxqz -- "${i}"); then
+				cat <<DUDE >>/config/wg0.conf
+PersistentKeepalive = 25
+
+DUDE
+			else
+				cat <<DUDE >>/config/wg0.conf
 
 DUDE
 			fi
 			if [ -z "${LOG_CONFS}" ] || [ "${LOG_CONFS}" = "true" ]; then
 				echo "PEER ${i} QR code:"
-				qrencode -t ansiutf8 </config/${PEER_ID}/${PEER_ID}.conf
+				qrencode -t ansiutf8 <"/config/${PEER_ID}/${PEER_ID}.conf"
 			else
 				echo "PEER ${i} conf and QR code png saved in /config/${PEER_ID}"
 			fi
-			qrencode -o /config/${PEER_ID}/${PEER_ID}.png </config/${PEER_ID}/${PEER_ID}.conf
+			qrencode -o "/config/${PEER_ID}/${PEER_ID}.png" <"/config/${PEER_ID}/${PEER_ID}.conf"
 		fi
 	done
 }
@@ -104,6 +113,7 @@ ORIG_PEERDNS="$PEERDNS"
 ORIG_PEERS="$PEERS"
 ORIG_INTERFACE="$INTERFACE"
 ORIG_ALLOWEDIPS="$ALLOWEDIPS"
+ORIG_PERSISTENTKEEPALIVE_PEERS="$PERSISTENTKEEPALIVE_PEERS"
 DUDE
 }
 
@@ -132,12 +142,15 @@ if ip link add dev test type wireguard; then
 
 	if [ -n "$PEERS" ]; then
 		echo "**** Server mode is selected ****"
-		if [[ "$PEERS" =~ ^[0-9]+$ ]] && ! [[ "$PEERS" =~ *,* ]]; then
-			PEERS_ARRAY=($(seq 1 $PEERS))
+		if [[ "$PEERS" =~ ^[0-9]+$ ]] && ! [[ "$PEERS" = *,* ]]; then
+			mapfile -t PEERS_ARRAY < <(seq 1 "${PEERS}")
 		else
-			PEERS_ARRAY=($(echo "$PEERS" | tr ',' ' '))
+			mapfile -t PEERS_ARRAY < <(echo "${PEERS}" | tr ',' '\n')
 		fi
-		PEERS_COUNT=$(echo "${#PEERS_ARRAY[@]}")
+		if [[ -n "${PERSISTENTKEEPALIVE_PEERS}" ]]; then
+			echo "**** PersistentKeepalive will be set for: ${PERSISTENTKEEPALIVE_PEERS/,/ } ****"
+			mapfile -t PERSISTENTKEEPALIVE_PEERS_ARRAY < <(echo "${PERSISTENTKEEPALIVE_PEERS}" | tr ',' '\n')
+		fi
 		if [ -z "$SERVERURL" ] || [ "$SERVERURL" = "auto" ]; then
 			SERVERURL=$(curl -s icanhazip.com)
 			echo "**** SERVERURL var is either not set or is set to \"auto\", setting external IP to auto detected value of $SERVERURL ****"
@@ -165,7 +178,7 @@ if ip link add dev test type wireguard; then
 			echo "**** Server mode is selected ****"
 			[[ -f /config/.donoteditthisfile ]] &&
 				. /config/.donoteditthisfile
-			if [ "$SERVERURL" != "$ORIG_SERVERURL" ] || [ "$SERVERPORT" != "$ORIG_SERVERPORT" ] || [ "$PEERDNS" != "$ORIG_PEERDNS" ] || [ "$PEERS" != "$ORIG_PEERS" ] || [ "$INTERFACE" != "$ORIG_INTERFACE" ] || [ "$ALLOWEDIPS" != "$ORIG_ALLOWEDIPS" ]; then
+			if [ "$SERVERURL" != "$ORIG_SERVERURL" ] || [ "$SERVERPORT" != "$ORIG_SERVERPORT" ] || [ "$PEERDNS" != "$ORIG_PEERDNS" ] || [ "$PEERS" != "$ORIG_PEERS" ] || [ "$INTERFACE" != "$ORIG_INTERFACE" ] || [ "$ALLOWEDIPS" != "$ORIG_ALLOWEDIPS" ] || [[ "$PERSISTENTKEEPALIVE_PEERS" != "$ORIG_PERSISTENTKEEPALIVE_PEERS" ]]; then
 				echo "**** Server related environment variables changed, regenerating 1 server and ${PEERS} peer/client confs ****"
 				generate_confs
 				save_vars

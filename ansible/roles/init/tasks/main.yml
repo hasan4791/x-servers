@@ -1,4 +1,18 @@
 ---
+- name: Check host deps are updated
+  stat:
+    path: ~/.xs_host_done
+  register: file_status
+  become: true
+  until: file_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
+- name: Check file exists
+  set_fact:
+    xs_host_update: false
+  when: file_status.stat.exists and not xserver_force_update_host|bool
+
 - name: Check prerequisite for rootless container (container_use_devices)
   command: getsebool container_use_devices
   become: true
@@ -6,9 +20,36 @@
   until: sebool_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: '(xserver_rootless|bool or ov_rootless|bool) and (xserver_install == "all" or "openvpn-as" in xserver_install)'
+  when: '(xserver_install == "all" or "openvpn-as" in xserver_install) and "pios11" not in xserver_os'
 
 - name: Fail on sebool_status off
   fail:
-    msg: "Rootless Openvpn-AS needs \"container_use_devices\" to be enabled"
-  when: 'sebool_status is not skipped and "off" in sebool_status.stdout' 
+    msg: "Rootless Openvpn-AS needs \"container_use_devices\" to be enabled. Run \"sudo setsebool -P container_use_devices on\""
+  when: '(xserver_rootless|bool or ov_rootless|bool) and sebool_status is not skipped and "off" in sebool_status.stdout and "pios11" not in xserver_os'
+
+- name: Warning when container_use_devices on
+  fail:
+    msg: "Warning: \"container_use_devices\" is enabled but is not required for current installation."
+  when: 'not (xserver_rootless|bool or ov_rootless|bool) and sebool_status is not skipped and "on" in sebool_status.stdout and "pios11" not in xserver_os'
+  ignore_errors: True
+
+- name: Sleep for 5 seconds and continue
+  wait_for:
+    timeout: 5
+  delegate_to: 127.0.0.1
+  when: 'not (xserver_rootless|bool or ov_rootless|bool) and sebool_status is not skipped and "on" in sebool_status.stdout and "pios11" not in xserver_os'
+
+- name: Check force update
+  set_fact:
+    bs_force_update: true
+  when: xserver_force_update|bool or ov_force_update|bool or wg_force_update|bool
+
+- name: Check rootless deployment
+  set_fact:
+    xs_rootless_container: true
+  when: xserver_rootless|bool or wg_rootless|bool or ov_rootless|bool
+
+- name: Check rootful deployment
+  set_fact:
+    xs_root_container: true
+  when: 'not (xserver_rootless|bool and xs_rootless_container|bool)'

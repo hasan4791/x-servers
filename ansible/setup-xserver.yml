@@ -2,18 +2,18 @@
 - hosts: all
   pre_tasks:
   - set_fact:
-      # Oracle Linux 9
-      operating_system: "ol9"
       bs_force_update: false
+      xs_host_update: true
+      xs_root_container: false
+      xs_rootless_container: false
   vars_files:
     - var_xservers.yml
-    - var_wireguard.yml
-    - var_openvpnas.yml
   roles:
-    # Run this role as priviledges user
+    - role: init
+    # Run this role as privileged user
     - role: setup-instance
       become: true
-    #- role: init
+      when: xs_host_update|bool
     - role: setup-baseimage
       when: xserver_install != "none"
     - role: setup-openvpnas

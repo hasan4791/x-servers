@@ -32,12 +32,13 @@ CONTAINER_GROUP="1000"
 if [ "${CONTAINER_MODE}" == "rootless" ]; then
 	# In rootless mode, container root user
 	# is mapped to host's non-root user
-{% if xserver_container_non_root_uid is defined %}
-	CONTAINER_USER={{ xserver_container_non_root_uid }}
+{% if xserver_container_non_root_id is defined %}
+	CONTAINER_USER={{ xserver_container_non_root_id }}
+	CONTAINER_GROUP={{ xserver_container_non_root_id }}
 {% else %}
 	CONTAINER_USER=0
-{% endif %}
 	CONTAINER_GROUP=0
+{% endif %}
 fi
 
 # Run container in podman with

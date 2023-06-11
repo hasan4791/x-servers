@@ -1,14 +1,122 @@
 ---
-xserver_root: ""
-xserver_data: ""
-xserver_install: "all"
+# XSERVER Local Configs
+# =====================
+# Project root path on the host where
+# the ansible-playbooks are executed
+xserver_project_root: "/x-servers"
+
+# XSERVER Remote Configs
+# ======================
+# Operating System of target host
+# Supported OS
+# Fedora based distro - "default"
+# Raspberry pi OS 11 - "pios11"
+xserver_os: "default"
+# Distribution of target host
+# Supported distro
+# 1. fedora
+# 2. debian
+xserver_distro: "fedora"
+# Path on target host where xserver
+# files(Dockerfile/scripts) are stored
+xserver_root: "/home/dir"
+# Path on target host where xserver
+# data files(configs) are stored
+xserver_data: "/home/dir"
+# List of servers to be installed
+# on target host
+# Supported servers
+# 1. openvpn-as
+# 2. wireguard
+# 3. all
+xserver_install: ""
+# Architecture of target host
+# Supported arch
+# 1. amd64
+# 2. arm64
 xserver_target_arch: ""
+# Default container image name for the servers
+# on target host
 xserver_baseimage: "localhost/xs-baseimage-ubuntu:22.04"
 xserver_wireguard: "localhost/xs-wireguard:latest"
 xserver_openvpnas: "localhost/xs-openvpn-as:latest"
+# Slack URL to push weekly updates
+# about host & container status
 xserver_slack_url: ""
+# Force update/deploy all the servers
+# by building new container image
 xserver_force_update: false
+# Force update target host dependencies and
+# configs
+xserver_force_update_host: false
+# Deploy servers as rootless containers
 xserver_rootless: false
-xserver_host_non_root_user: "abc"
-xserver_host_non_root_group: "abc"
-xserver_container_non_root_uid: "5000"
+# User to be created on target host which will
+# be used by the deployed servers
+# Default username: "xuser"
+xserver_container_non_root_user: "xuser"
+# Group to be created on target host which will
+# be used by the deployed servers
+# Default groupname: "xuser"
+xserver_container_non_root_group: "xuser"
+# UID of the non-root user on target host
+xserver_container_non_root_id: "5000"
+
+# 1. Openvpn-AS Configs
+# =====================
+# Force update openvpn-as server
+ov_force_update: false
+# Deploy openvpn-as server as
+# rootless containers
+ov_rootless: false
+# Timezone config for container
+ov_timezone: "Asia/Kolkata"
+# List of Admin & Client ports exposed on
+# container for openvpn-as server
+ov_admin_port: 943
+ov_client_port_tcp: 443
+ov_client_port_udp: 1194
+# List of Admin & Client ports exposed on
+# target host for openvpn-as server
+ov_admin_port_publish: 943
+ov_client_port_tcp_publish: 443
+ov_client_port_udp_publish: 1194
+
+# 2. Wireguard Configs
+# ====================
+# Force update wireguard server
+wg_force_update: false
+# Deploy wireguard server as
+# rootless containers
+wg_rootless: false
+# Timezone config for wireguard server
+wg_timezone: "Asia/Kolkata"
+# Supported modes
+# 1. server (default)
+# 2. client
+# Wireguard running mode
+wg_mode: "server"
+# Wireguard server URL/IP
+# 'auto' - Auto resolve to external public IP
+wg_server_url: auto
+# Wireguard server/client port
+wg_server_port: 51820
+# Wireguard peer names
+# Either numbers or alpha numeric strings
+wg_peers: 1
+# DNS to be configured on wireguard clients
+# 'auto' - User target host's DNS
+wg_peer_dns: auto
+# Internal Subnet CIDRs for wireguard clients
+# and server. Defaults to "172.32.1.0"
+wg_internal_subnet: "172.32.1.0"
+# IP ranges that peers will be able to reach
+# through VPN connection
+wg_allowed_ips: "0.0.0.0/0"
+# Generates QRCode configs on container logs
+wg_log_confs: false
+# Persistent keepalive configuraion of 25s
+# for Wireguard
+wg_keepalive_peers: "all"
+# For detailed explanation, refer here
+# https://github.com/linuxserver/docker-wireguard/blob/master/README.md
