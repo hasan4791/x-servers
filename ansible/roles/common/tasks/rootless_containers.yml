@@ -117,14 +117,14 @@
 - name: Fetch podman non-root user id
   command: id -u
   register: podman_user_id
-  until: user_id is successful
+  until: podman_user_id is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
 
 - name: Fetch podman non-root group id
   command: id -g
   register: podman_group_id
-  until: group_id is successful
+  until: podman_group_id is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
 

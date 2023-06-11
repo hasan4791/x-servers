@@ -53,12 +53,14 @@ xserver_force_update_host: false
 xserver_rootless: false
 # User to be created on target host which will
 # be used by the deployed servers
-xserver_host_non_root_user: "xuser"
+# Default username: "xuser"
+xserver_container_non_root_user: "xuser"
 # Group to be created on target host which will
 # be used by the deployed servers
-xserver_host_non_root_group: "xuser"
+# Default groupname: "xuser"
+xserver_container_non_root_group: "xuser"
 # UID of the non-root user on target host
-xserver_container_non_root_uid: "5000"
+xserver_container_non_root_id: "5000"
 
 # 1. Openvpn-AS Configs
 # =====================

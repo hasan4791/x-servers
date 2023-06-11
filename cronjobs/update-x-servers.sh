@@ -22,14 +22,6 @@ if [ -z "${XSERVER_PATH}" ]; then
 	XSERVER_PATH="/root/x-servers"
 fi
 
-if [ "$(podman ps -a --format "{{.Names}}" | wc -l)" -eq 0 ]; then
-	echo "No containers are running"
-	node_update
-	node_reboot
-fi
-XSERVERS=$(podman ps -a --format "{{.Names}}")
-XSERVER_IMG="baseimage-ubuntu ${XSERVERS}"
-
 send_slack_notification() {
 	STATUS="$1"
 	if [ "${STATUS}" == "success" ]; then
@@ -86,6 +78,15 @@ node_reboot() {
 	fi
 }
 
+if [ "$(podman ps -a --format "{{.Names}}" | wc -l)" -eq 0 ]; then
+	echo "No containers are running"
+	node_update
+	node_reboot
+	exit 0
+fi
+XSERVERS=$(podman ps -a --format "{{.Names}}")
+XSERVER_IMG="baseimage-ubuntu ${XSERVERS}"
+
 #trap on failure
 trap handle_failure EXIT SIGTERM SIGINT
 
@@ -115,6 +116,7 @@ start_containers
 
 #Clear podman cache
 podman system prune -a -f
+podman system prune --volumes -f
 
 #Send notification to Slack
 # shellcheck disable=SC2236
@@ -124,3 +126,5 @@ fi
 
 #Remove lock & Reboot node
 node_reboot
+
+exit 0

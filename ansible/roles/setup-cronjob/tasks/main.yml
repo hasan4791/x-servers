@@ -36,11 +36,18 @@
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
 
+- name: Fetch non-root user name
+  command: id -un
+  register: user_id
+  until: user_id is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+
 # Rootless Mode runs every Sunday 00:30
 - name: Rootless cronjob parameters
   set_fact:
     xs_cron_schedule: "30 0 * * 0"
-    xs_cron_user: "{{ xserver_host_non_root_user }}"
+    xs_cron_user: "{{ user_id.stdout }}"
 
 - name: Copy cronjob script
   template:
