@@ -15,7 +15,7 @@
       "type": "section",
       "text": {
         "type": "mrkdwn",
-        "text": "```_CONTAINER_STATUS_TITLE_:\n_CONTAINER_STATUS_```"
+        "text": "```_CONTAINER_STATUS_TITLE_:\n_CONTAINER_STATUS_```\nKERNEL_VERSION:_KERNEL_VERSION_"
       }
     }
   ]

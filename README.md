@@ -12,7 +12,7 @@ Ubuntu 22.04
 
 ## Host OS Supported
 1. Any Fedora based distro
-2. Official Raspberry pi OS 11
+2. Official Raspberry pi OS 11,12
 
 ## Container Engine
 Podman
@@ -38,7 +38,7 @@ To deploy this project on x86 hosts
  cd x-servers
  ./build.sh "amd64" "baseimage-ubuntu ."
  ./start.sh
- ansible-playbook -i <path_to_inventory_file>, setup-xsever.yml -u <non-root-user>
+ ansible-playbook -i <path_to_inventory_file>, setup-xserver.yml -u <non-root-user>
 ```
 2. Create ansible inventory file with target host details
 3. Copy & Update xserver configs. Refer [here](https://github.com/hasan4791/x-servers/blob/main/ansible/var_xservers.yml.template) for detailed information about configs
@@ -61,7 +61,7 @@ sudo setsebool -P container_use_devices on
 2. Rootless openvpn-as server also needs [this](https://github.com/hasan4791/x-servers/blob/main/ansible/roles/setup-openvpnas/files/xs-openvpnas-policy.te) custom selinux module to allow "tun_tap_devices" for containers
 3. Rootless Wireguard server requires MTU value to be updated in containers.conf for slirp4netns
 ```bash
-echo "network_cmd_options=[\"mtu=1500\"]" | sudo tee -a /usr/share/containers/containers.conf
+sed -i -e '/^#network_cmd_options/a network_cmd_options=["mtu=1500"]' /usr/share/containers/containers.conf
 ```
 4. The default interface used in Rootless containers are "tap" interfaces and so any iptable rules that needs to be updated should point to this interface rather than the generic "eth"  type.
 
