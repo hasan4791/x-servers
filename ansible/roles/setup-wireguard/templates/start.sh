@@ -46,7 +46,6 @@ fi
 podman run -d \
 	--name="${CONTAINER_NAME}" \
 	--cap-add=NET_ADMIN \
-	--dns "1.1.1.1" \
 	-h "${CONTAINER_NAME}" \
 	-e PUID="${CONTAINER_USER}" \
 	-e PGID="${CONTAINER_GROUP}" \
