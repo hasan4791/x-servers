@@ -20,24 +20,24 @@
   until: sebool_status is successful
   retries: "{{ task_retries | int }}"
   delay: "{{ task_delay | int }}"
-  when: '(xserver_install == "all" or "openvpn-as" in xserver_install) and "pios11" not in xserver_os'
+  when: '(xserver_install == "all" or "openvpn-as" in xserver_install) and "pios" not in xserver_os'
 
 - name: Fail on sebool_status off
   fail:
     msg: "Rootless Openvpn-AS needs \"container_use_devices\" to be enabled. Run \"sudo setsebool -P container_use_devices on\""
-  when: '(xserver_rootless|bool or ov_rootless|bool) and sebool_status is not skipped and "off" in sebool_status.stdout and "pios11" not in xserver_os'
+  when: '(xserver_rootless|bool or ov_rootless|bool) and sebool_status is not skipped and "off" in sebool_status.stdout and "pios" not in xserver_os'
 
 - name: Warning when container_use_devices on
   fail:
     msg: "Warning: \"container_use_devices\" is enabled but is not required for current installation."
-  when: 'not (xserver_rootless|bool or ov_rootless|bool) and sebool_status is not skipped and "on" in sebool_status.stdout and "pios11" not in xserver_os'
+  when: 'not (xserver_rootless|bool or ov_rootless|bool) and sebool_status is not skipped and "on" in sebool_status.stdout and "pios" not in xserver_os'
   ignore_errors: True
 
 - name: Sleep for 5 seconds and continue
   wait_for:
     timeout: 5
   delegate_to: 127.0.0.1
-  when: 'not (xserver_rootless|bool or ov_rootless|bool) and sebool_status is not skipped and "on" in sebool_status.stdout and "pios11" not in xserver_os'
+  when: 'not (xserver_rootless|bool or ov_rootless|bool) and sebool_status is not skipped and "on" in sebool_status.stdout and "pios" not in xserver_os'
 
 - name: Check force update
   set_fact:

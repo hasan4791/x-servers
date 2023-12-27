@@ -9,7 +9,7 @@ BUILD_SERVERS=$2
 #Build arguments
 S6_OVERLAY_VERSION=$(curl -sX GET "https://api.github.com/repos/just-containers/s6-overlay/releases/latest" |
 	awk '/tag_name/{print $4;exit}' FS='[""]' | awk '{print substr($1,2); }')
-ANSIBLE_CORE_VERSION="2.13.7"
+ANSIBLE_CORE_VERSION="2.16.2"
 COREDNS_VERSION=$(curl -sX GET "https://api.github.com/repos/coredns/coredns/releases/latest" |
 	awk '/tag_name/{print $4;exit}' FS='[""]' | awk '{print substr($1,2); }')
 

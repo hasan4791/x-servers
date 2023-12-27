@@ -46,6 +46,7 @@ fi
 podman run -d \
 	--name="${CONTAINER_NAME}" \
 	--cap-add=NET_ADMIN \
+	--dns "1.1.1.1" \
 	-h "${CONTAINER_NAME}" \
 	-e PUID="${CONTAINER_USER}" \
 	-e PGID="${CONTAINER_GROUP}" \
@@ -76,12 +77,12 @@ podman run -d \
 	-e PEERDNS=auto \
 {% endif %}
 {% if wg_internal_subnet is defined %}
-	-e INTERNAL_SUBNET={{ wg_internal_subnet|ipaddr('address') }} \
+	-e INTERNAL_SUBNET={{ wg_internal_subnet|ansible.utils.ipaddr('address') }} \
 {% else %}
 	-e INTERNAL_SUBNET=172.32.1.0 \
 {% endif %}
 {% if wg_allowed_ips is defined %}
-	-e ALLOWEDIPS={{ wg_allowed_ips|ipaddr('net') }} \
+	-e ALLOWEDIPS={{ wg_allowed_ips|ansible.utils.ipaddr('net') }} \
 {% else %}
 	-e ALLOWEDIPS=0.0.0.0/0 \
 {% endif %}
