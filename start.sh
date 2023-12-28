@@ -32,6 +32,6 @@ podman run -d \
 	-e PUID="${CONTAINER_USER}" \
 	-e PGID="${CONTAINER_GROUP}" \
 	-e TZ=Asia/Kolkata \
-	-v "${CONFIG_PATH}":/x-servers:Z \
+	-v "${CONFIG_PATH}":/x-servers \
 	--restart always \
 	localhost/xs-ansible-core:latest

@@ -151,8 +151,10 @@
   when: xs_custom_policy is defined and not xs_force_update
 
 - name: Apply custom selinux policy
-  include: xs_custom_sepolicy.yml
-  become: true
+  include_tasks: xs_custom_sepolicy.yml
+  args:
+    apply:
+      become: true
   when: xs_custom_policy is defined and (xs_force_update or xs_custom_policy not in sepolicy_list.stdout)
 
 - name: "Start {{ xserver_name }} Server"
