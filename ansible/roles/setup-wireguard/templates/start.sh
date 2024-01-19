@@ -76,12 +76,12 @@ podman run -d \
 	-e PEERDNS=auto \
 {% endif %}
 {% if wg_internal_subnet is defined %}
-	-e INTERNAL_SUBNET={{ wg_internal_subnet|ipaddr('address') }} \
+	-e INTERNAL_SUBNET={{ wg_internal_subnet|ansible.utils.ipaddr('address') }} \
 {% else %}
 	-e INTERNAL_SUBNET=172.32.1.0 \
 {% endif %}
 {% if wg_allowed_ips is defined %}
-	-e ALLOWEDIPS={{ wg_allowed_ips|ipaddr('net') }} \
+	-e ALLOWEDIPS={{ wg_allowed_ips|ansible.utils.ipaddr('net') }} \
 {% else %}
 	-e ALLOWEDIPS=0.0.0.0/0 \
 {% endif %}

@@ -36,6 +36,8 @@ send_slack_notification() {
 	#shellcheck disable=SC2028
 	CONTAINER_STATUS=$(for i in $(podman ps -a --format "{{.Names}}:{{.Status}}" | sed -e "s/ /_/g"); do echo -n "$i\\n"; done)
 	sed -i -e "s/_CONTAINER_STATUS_/${CONTAINER_STATUS}/g" "${ALERT_MSG}"
+	KERNEL_VERSION="$(uname -r) $(uname -v)"
+	sed -i -e "s/_KERNEL_VERSION_/${KERNEL_VERSION}/g" "${ALERT_MSG}"
 	curl -X POST -H 'Content-type: application/json' --data-binary "@${ALERT_MSG}" "$SLACK_URL"
 	rm -rf "${ALERT_MSG}"
 }

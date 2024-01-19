@@ -17,6 +17,16 @@
         "type": "mrkdwn",
         "text": "```_CONTAINER_STATUS_TITLE_:\n_CONTAINER_STATUS_```"
       }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "• Kernel Version: _KERNEL_VERSION_"
+      }
     }
   ]
 }
