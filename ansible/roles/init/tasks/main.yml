@@ -56,3 +56,8 @@
   set_fact:
     xs_root_container: true
   when: 'not (xserver_rootless|bool and xs_rootless_container|bool)'
+
+- name: Check IPv6 support
+  set_fact:
+    xs_ipv6: true
+  when: podman_enable_ipv6|bool and wg_enable_ipv6|bool
