@@ -89,6 +89,9 @@ DUDE
 PersistentKeepalive = 25
 
 DUDE
+				cat <<DUDE >>/config/${PEER_ID}/${PEER_ID}.conf
+PersistentKeepalive = 25
+DUDE
 			else
 				cat <<DUDE >>/config/wg0.conf
 

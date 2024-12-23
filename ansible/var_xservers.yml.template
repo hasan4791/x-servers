@@ -11,6 +11,7 @@ xserver_project_root: "/x-servers"
 # Supported OS
 # Fedora based distro - "default"
 # Raspberry pi OS 11 - "pios11"
+# Raspberry pi OS 12 - "pios12"
 xserver_os: "default"
 # Distribution of target host
 # Supported distro
@@ -29,7 +30,7 @@ xserver_data: "/home/dir"
 # 1. openvpn-as
 # 2. wireguard
 # 3. all
-xserver_install: ""
+xserver_install: "all"
 # Architecture of target host
 # Supported arch
 # 1. amd64
@@ -101,18 +102,30 @@ wg_mode: "server"
 wg_server_url: auto
 # Wireguard server/client port
 wg_server_port: 51820
-# Wireguard peer names
+# List of Wireguard peer names
 # Either numbers or alpha numeric strings
-wg_peers: 1
-# DNS to be configured on wireguard clients
+# New peers must be added in the last
+wg_peers:
+  - 1
+  - peer1
+# List of DNS to be configured on wireguard clients
 # 'auto' - User target host's DNS
-wg_peer_dns: auto
+wg_peer_dns:
+  - auto
 # Internal Subnet CIDRs for wireguard clients
 # and server. Defaults to "172.32.1.0"
-wg_internal_subnet: "172.32.1.0"
-# IP ranges that peers will be able to reach
+wg_internal_subnet: 172.32.1.0
+# List of IP ranges that peers will be able to reach
 # through VPN connection
-wg_allowed_ips: "0.0.0.0/0"
+wg_allowed_ips:
+  - 0.0.0.0/0
+# List of IP ranges that server should allow the peers
+# to reach. Used for Site-to-site VPN configuration
+wg_server_allowed_ips:
+  1:
+    - 192.168.1.0/24
+  peer1:
+    - 192.168.2.0/24
 # Generates QRCode configs on container logs
 wg_log_confs: false
 # Persistent keepalive configuraion of 25s

@@ -66,12 +66,24 @@ podman run -d \
 	-e SERVERPORT=51820 \
 {% endif %}
 {% if wg_peers is defined %}
-	-e PEERS={{ wg_peers }} \
+	-e PEERS=
+{%- set comma = joiner(",") %}
+{%- for peer in wg_peers %}
+	{{- comma() }}{{ peer -}}
+{% endfor %} \
 {% else %}
 	-e PEERS=1 \
 {% endif %}
 {% if wg_peer_dns is defined %}
-	-e PEERDNS={{ wg_peer_dns }} \
+	-e PEERDNS=
+{%- set comma = joiner(",") %}
+{%- for dns in wg_peer_dns %}
+{%- if dns == 'auto' %}
+	{{- comma() }}{{ dns -}}
+{% else %}
+	{{- comma() }}{{ dns|ansible.utils.ipaddr('address') -}}
+{% endif %}
+{% endfor %} \
 {% else %}
 	-e PEERDNS=auto \
 {% endif %}
@@ -81,9 +93,22 @@ podman run -d \
 	-e INTERNAL_SUBNET=172.32.1.0 \
 {% endif %}
 {% if wg_allowed_ips is defined %}
-	-e ALLOWEDIPS={{ wg_allowed_ips|ansible.utils.ipaddr('net') }} \
+	-e ALLOWEDIPS=
+{%- set comma = joiner(",") %}
+{%- for ip in wg_allowed_ips %}
+	{{- comma() }}{{ ip|ansible.utils.ipaddr('net') -}}
+{% endfor %} \
 {% else %}
 	-e ALLOWEDIPS=0.0.0.0/0 \
+{% endif %}
+{% if wg_server_allowed_ips is defined %}
+{% for peer,ips in wg_server_allowed_ips.items() %}
+	-e SERVER_ALLOWEDIPS_PEER_{{ peer }}=
+{%- set comma = joiner(",") %}
+{%- for ip in ips %}
+	{{- comma()	}}{{- ip|ansible.utils.ipaddr('net') -}}
+{% endfor %} \
+{% endfor %}
 {% endif %}
 {% if wg_keepalive_peers is defined %}
 	-e PERSISTENTKEEPALIVE_PEERS={{ wg_keepalive_peers }} \
