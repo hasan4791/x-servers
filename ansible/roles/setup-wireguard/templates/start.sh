@@ -106,7 +106,7 @@ podman run -d \
 	-e SERVER_ALLOWEDIPS_PEER_{{ peer }}=
 {%- set comma = joiner(",") %}
 {%- for ip in ips %}
-	{{- comma()	}}{{- ip|ansible.utils.ipaddr('net') -}}
+	{{- comma() }}{{- ip|ansible.utils.ipaddr('net') -}}
 {% endfor %} \
 {% endfor %}
 {% endif %}
