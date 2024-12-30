@@ -7,6 +7,7 @@
       xs_root_container: false
       xs_rootless_container: false
       xs_config_file: "var_xservers.yml"
+      xs_ipv6: false
   roles:
     - role: init
     # Run this role as privileged user

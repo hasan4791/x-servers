@@ -1,10 +1,24 @@
 #!/usr/bin/with-contenv bash
 # shellcheck shell=bash
 
+get_ipv6_address() {
+	for idx in {2..65535}; do
+		n=$(printf "%x\n" "$idx")
+		PROPOSED_IPV6="${INTERFACE_IPV6}::$n"
+		if ! grep -q -R "${PROPOSED_IPV6}" /config/peer*/*.conf 2>/dev/null && ([ -z "${ORIG_INTERFACE_IPV6}" ] || ! grep -q -R "${ORIG_INTERFACE_IPV6}::$n" /config/peer*/*.conf 2>/dev/null); then
+			CLIENT_IPV6="${PROPOSED_IPV6}"
+			break
+		elif [[ $idx -eq 65535 ]]; then
+			echo "**** No free IPv6 found ****"
+			exit 1
+		fi
+	done
+}
+
 generate_confs() {
+	umask 077
 	mkdir -p /config/server
 	if [ ! -f /config/server/privatekey-server ]; then
-		umask 077
 		wg genkey | tee /config/server/privatekey-server | wg pubkey >/config/server/publickey-server
 	fi
 	eval "$(printf %s)
@@ -12,6 +26,13 @@ generate_confs() {
 $(cat /config/templates/server.conf)
 
 DUDE"
+	if [ -n "$IPV6" ] || [ "$IPV6" = "true" ]; then
+		sed -i 's/PostUp_IPv6/PostUp/g' /config/wg0.conf
+		sed -i 's/PostDown_IPv6/PostDown/g' /config/wg0.conf
+	else
+		sed -i '/PostUp_IPv6/d' /config/wg0.conf
+		sed -i '/PostDown_IPv6/d' /config/wg0.conf
+	fi
 	# Update default interface in iptable rules
 	DEFAULT_INTERFACE="$(ip route | grep "default" | awk '{print $5}')"
 	sed -i -e "s/eth+/${DEFAULT_INTERFACE}/g" /config/wg0.conf
@@ -24,25 +45,45 @@ DUDE"
 			else
 				PEER_ID="peer_${i}"
 			fi
-			umask 077
 			mkdir -p "/config/${PEER_ID}"
 			if [ ! -f "/config/${PEER_ID}/privatekey-${PEER_ID}" ]; then
 				wg genkey | tee "/config/${PEER_ID}/privatekey-${PEER_ID}" | wg pubkey >"/config/${PEER_ID}/publickey-${PEER_ID}"
 				wg genpsk >"/config/${PEER_ID}/presharedkey-${PEER_ID}"
 			fi
 			if [ -f "/config/${PEER_ID}/${PEER_ID}.conf" ]; then
-				CLIENT_IP=$(grep "Address" "/config/${PEER_ID}/${PEER_ID}.conf" | awk '{print $NF}')
+				CLIENT_IPV4=$(grep "Address" "/config/${PEER_ID}/${PEER_ID}.conf" | awk '{print $NF}' | cut -d',' -f1)
 				if [ -n "${ORIG_INTERFACE}" ] && [ "${INTERFACE}" != "${ORIG_INTERFACE}" ]; then
-					CLIENT_IP="${CLIENT_IP//${ORIG_INTERFACE}/${INTERFACE}}"
+					CLIENT_IPV4="${CLIENT_IPV4//${ORIG_INTERFACE}/${INTERFACE}}"
+				fi
+				if [ -n "$IPV6" ] || [ "$IPV6" = "true" ]; then
+					CLIENT_IPV6=$(grep "Address" "/config/${PEER_ID}/${PEER_ID}.conf" | awk '{print $NF}' | cut -d',' -f2)
+					if [ -n "${ORIG_INTERFACE_IPV6}" ] && [ "${INTERFACE_IPV6}" != "${ORIG_INTERFACE_IPV6}" ]; then
+						CLIENT_IPV6="${CLIENT_IPV6//${ORIG_INTERFACE_IPV6}/${INTERFACE_IPV6}}"
+					else
+						get_ipv6_address
+					fi
 				fi
 			else
 				for idx in {2..254}; do
 					PROPOSED_IP="${INTERFACE}.${idx}"
 					if ! grep -q -R "${PROPOSED_IP}" /config/peer*/*.conf 2>/dev/null && ([ -z "${ORIG_INTERFACE}" ] || ! grep -q -R "${ORIG_INTERFACE}.${idx}" /config/peer*/*.conf 2>/dev/null); then
-						CLIENT_IP="${PROPOSED_IP}"
+						CLIENT_IPV4="${PROPOSED_IP}"
 						break
+					elif [[ $idx -eq 254 ]]; then
+						echo "**** No free IPv4 found ****"
+						exit 1
 					fi
 				done
+				if [ -n "$IPV6" ] || [ "$IPV6" = "true" ]; then
+					get_ipv6_address
+				fi
+			fi
+			if [ -n "$IPV6" ] || [ "$IPV6" = "true" ]; then
+				CLIENT_IP="${CLIENT_IPV4},${CLIENT_IPV6}"
+				ALLOWED_IP="${CLIENT_IPV4}/32,${CLIENT_IPV6}/128"
+			else
+				CLIENT_IP="${CLIENT_IPV4}"
+				ALLOWED_IP="${CLIENT_IPV4}/32"
 			fi
 			if [ -f "/config/${PEER_ID}/presharedkey-${PEER_ID}" ]; then
 				# create peer conf with presharedkey
@@ -76,7 +117,7 @@ DUDE
 			if [ -n "${!SERVER_ALLOWEDIPS}" ]; then
 				echo "Adding ${!SERVER_ALLOWEDIPS} to wg0.conf's AllowedIPs for peer ${i}"
 				cat <<DUDE >>/config/wg0.conf
-AllowedIPs = ${CLIENT_IP}/32,${!SERVER_ALLOWEDIPS}
+AllowedIPs = ${ALLOWED_IP},${!SERVER_ALLOWEDIPS}
 DUDE
 				# This is required for Site2Site VPN Configuration
 				for ip in ${!SERVER_ALLOWEDIPS//,/ }; do
@@ -92,7 +133,7 @@ DUDE
 				done
 			else
 				cat <<DUDE >>/config/wg0.conf
-AllowedIPs = ${CLIENT_IP}/32
+AllowedIPs = ${ALLOWED_IP}
 DUDE
 			fi
 			sed -i -e "/#PostUp/d" "/config/${PEER_ID}/${PEER_ID}.conf"
@@ -129,6 +170,7 @@ ORIG_SERVERPORT="$SERVERPORT"
 ORIG_PEERDNS="$PEERDNS"
 ORIG_PEERS="$PEERS"
 ORIG_INTERFACE="$INTERFACE"
+ORIG_INTERFACE_IPV6="$INTERFACE_IPV6"
 ORIG_ALLOWEDIPS="$ALLOWEDIPS"
 ORIG_PERSISTENTKEEPALIVE_PEERS="$PERSISTENTKEEPALIVE_PEERS"
 DUDE
@@ -175,14 +217,22 @@ if ip link add dev test type wireguard; then
 		fi
 		SERVERPORT=${SERVERPORT:-51820}
 		echo "**** External server port is set to ${SERVERPORT}. Make sure that port is properly forwarded to port 51820 inside this container ****"
-		INTERNAL_SUBNET=${INTERNAL_SUBNET:-10.13.13.0}
+		INTERNAL_SUBNET=${INTERNAL_SUBNET:-172.32.1.0}
 		echo "**** Internal subnet is set to $INTERNAL_SUBNET ****"
 		INTERFACE=$(echo "$INTERNAL_SUBNET" | awk 'BEGIN{FS=OFS="."} NF--')
+		INTERNAL_SUBNET_IPV6=${INTERNAL_SUBNET_IPV6:-2401::0}
+		echo "**** Internal subnet IPv6 is set to $INTERNAL_SUBNET_IPV6 ****"
+		INTERFACE_IPV6=$(echo "$INTERNAL_SUBNET_IPV6" | awk 'BEGIN{FS=OFS="::"} NF--')
+		if [ -n "$IPV6" ] || [ "$IPV6" = "true" ]; then
+			SERVER_IP="${INTERFACE}.1,${INTERFACE_IPV6}::1"
+		else
+			SERVER_IP="${INTERFACE}.1"
+		fi
 		ALLOWEDIPS=${ALLOWEDIPS:-0.0.0.0/0, ::/0}
 		echo "**** AllowedIPs for peers $ALLOWEDIPS ****"
 		if [ -z "$PEERDNS" ] || [ "$PEERDNS" = "auto" ]; then
-			PEERDNS="${INTERFACE}.1"
-			echo "**** PEERDNS var is either not set or is set to \"auto\", setting peer DNS to ${INTERFACE}.1 to use wireguard docker host's DNS. ****"
+			PEERDNS="${SERVER_IP}"
+			echo "**** PEERDNS var is either not set or is set to \"auto\", setting peer DNS to ${SERVER_IP} to use wireguard docker host's DNS. ****"
 		else
 			echo "**** Peer DNS servers will be set to $PEERDNS ****"
 		fi
@@ -194,29 +244,25 @@ if ip link add dev test type wireguard; then
 			echo "**** Server mode is selected ****"
 			[[ -f /config/.donoteditthisfile ]] &&
 				. /config/.donoteditthisfile
-			if [ "$SERVERURL" != "$ORIG_SERVERURL" ] || [ "$SERVERPORT" != "$ORIG_SERVERPORT" ] || [ "$PEERDNS" != "$ORIG_PEERDNS" ] || [ "$PEERS" != "$ORIG_PEERS" ] || [ "$INTERFACE" != "$ORIG_INTERFACE" ] || [ "$ALLOWEDIPS" != "$ORIG_ALLOWEDIPS" ] || [[ "$PERSISTENTKEEPALIVE_PEERS" != "$ORIG_PERSISTENTKEEPALIVE_PEERS" ]]; then
+			if [ "$SERVERURL" != "$ORIG_SERVERURL" ] || [ "$SERVERPORT" != "$ORIG_SERVERPORT" ] || [ "$PEERDNS" != "$ORIG_PEERDNS" ] || [ "$PEERS" != "$ORIG_PEERS" ] || [ "$INTERFACE" != "$ORIG_INTERFACE" ] || [ "$ALLOWEDIPS" != "$ORIG_ALLOWEDIPS" ] || [[ "$PERSISTENTKEEPALIVE_PEERS" != "$ORIG_PERSISTENTKEEPALIVE_PEERS" ]] || [ "$INTERFACE_IPV6" != "$ORIG_INTERFACE_IPV6" ]; then
 				echo "**** Server related environment variables changed, regenerating 1 server and ${PEERS} peer/client confs ****"
 				generate_confs
 				save_vars
 			else
 				# Update default interface in iptable rules
 				DEFAULT_INTERFACE="$(ip route | grep "default" | awk '{print $5}')"
-				DEF_POST_UP_RULE="$(cat /config/templates/server.conf | grep PostUp)"
-				DEF_POST_DOWN_RULE="$(cat /config/templates/server.conf | grep PostDown)"
-				sed -i -e "s/PostUp.*/${DEF_POST_UP_RULE}/g" /config/wg0.conf
-				sed -i -e "s/PostDown.*/${DEF_POST_DOWN_RULE}/g" /config/wg0.conf
-				sed -i -e "s/eth+/${DEFAULT_INTERFACE}/g" /config/wg0.conf
-				for i in $(find -L /config -name peer_*_postup.sh -o -name peer_*_postdown.sh);
-				do
-					if [[ "$i" = *postup.sh ]]; then
-						DEF_RULE="$(grep "PostUp" </config/templates/peer-s2s.conf | head -n 2 | tail -n 1)"
-					else
-						DEF_RULE="$(grep "PostUp" </config/templates/peer-s2s.conf | head -n 2 | tail -n 1)"
-					fi
-					MATCH_RULE=${DEF_RULE//eth+/.*.}
-					POST_RULE=${DEF_RULE//eth+/${DEFAULT_INTERFACE}}
-					sed -i -e "s/${MATCH_RULE}/${POST_RULE}/g" "$i"
-				done
+				if [ -n "$IPV6" ] || [ "$IPV6" = "true" ]; then
+					IPTABLE="ip6tables"
+				else
+					IPTABLE="iptables"
+				fi
+				DEF_RULE="$IPTABLE -t nat -A POSTROUTING -o eth+ -j MASQUERADE;"
+				MATCH_UP_RULE=${DEF_RULE//eth+/.*.}
+				POST_UP_RULE=${DEF_RULE//eth+/${DEFAULT_INTERFACE}}
+				MATCH_DOWN_RULE=${MATCH_UP_RULE//-A/-D}
+				POST_DOWN_RULE=${POST_UP_RULE//-A/-D}
+				sed -i "s/${MATCH_UP_RULE}/${POST_UP_RULE}/g" /config/wg0.conf
+				sed -i "s/${MATCH_DOWN_RULE}/${POST_DOWN_RULE}/g" /config/wg0.conf
 				echo "**** No changes to parameters. Existing configs are used. ****"
 			fi
 		fi
@@ -232,7 +278,7 @@ if ip link add dev test type wireguard; then
 				DEF_RULE="$(grep "$rule" </config/templates/peer-s2s.conf | head -n 2 | tail -n 1)"
 				MATCH_RULE=${DEF_RULE//eth+/.*.}
 				POST_RULE=${DEF_RULE//eth+/${DEFAULT_INTERFACE}}
-				sed -i -e "s/${MATCH_RULE}/${POST_RULE}/g" "/config/wg0.conf"
+				sed -i "s/${MATCH_RULE}/${POST_RULE}/g" /config/wg0.conf
 			done
 		fi
 		USE_COREDNS="${USE_COREDNS,,}"

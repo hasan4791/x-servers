@@ -49,6 +49,9 @@ podman run -d \
 	-h "${CONTAINER_NAME}" \
 	-e PUID="${CONTAINER_USER}" \
 	-e PGID="${CONTAINER_GROUP}" \
+{% if wg_enable_ipv6 is defined and wg_enable_ipv6|bool %}
+	--network=podman-dual-stack \
+{% endif %}
 {% if wg_timezone is defined %}
 	-e TZ={{ wg_timezone }} \
 {% else %}
@@ -87,10 +90,20 @@ podman run -d \
 {% else %}
 	-e PEERDNS=auto \
 {% endif %}
+{% if wg_enable_ipv6 is defined %}
+	-e IPV6={{ wg_enable_ipv6|bool }} \
+{% else %}
+	-e IPV6=false \
+{% endif %}
 {% if wg_internal_subnet is defined %}
-	-e INTERNAL_SUBNET={{ wg_internal_subnet|ansible.utils.ipaddr('address') }} \
+	-e INTERNAL_SUBNET={{ wg_internal_subnet|ansible.utils.ipaddr('net') }} \
 {% else %}
 	-e INTERNAL_SUBNET=172.32.1.0 \
+{% endif %}
+{% if wg_internal_subnet_ipv6 is defined %}
+	-e INTERNAL_SUBNET_IPV6={{ wg_internal_subnet_ipv6|ansible.utils.ipaddr('net') }} \
+{% else %}
+	-e INTERNAL_SUBNET_IPV6=2401::/64 \
 {% endif %}
 {% if wg_allowed_ips is defined %}
 	-e ALLOWEDIPS=
@@ -115,7 +128,13 @@ podman run -d \
 {% else %}
     -e PERSISTENTKEEPALIVE_PEERS="all" \
 {% endif %}
+{% if wg_server_port is defined %}
+	-p {{ wg_server_port }}:51820/udp \
+	-p [::]:{{ wg_server_port }}:51820/udp \
+{% else %}
 	-p 51820:51820/udp \
+	-p [::]:51820:51820/udp \
+{% endif %}
 {% endif %}
 {% if wg_log_confs is defined %}
 	-e LOG_CONFS={{ wg_log_confs|bool }} \
@@ -125,6 +144,9 @@ podman run -d \
 	-v "${CONFIG_PATH}"/config:/config:Z \
 {% if wg_mode == "client" %}
 	--sysctl="net.ipv4.conf.all.src_valid_mark=1" \
+{% endif %}
+{% if wg_enable_ipv6 is defined and wg_enable_ipv6|bool %}
+	--sysctl="net.ipv6.conf.all.forwarding=1" \
 {% endif %}
 	--restart always \
 	localhost/xs-wireguard:latest

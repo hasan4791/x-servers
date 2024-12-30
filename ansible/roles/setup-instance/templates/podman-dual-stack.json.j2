@@ -1,0 +1,36 @@
+{
+     "name": "podman-dual-stack",
+     "id": "a4808303d1f9d6f4c15a8ed397e1ac366726f89d3dfcbd977ce4bc0ff47e8134",
+     "driver": "bridge",
+     "network_interface": "podmanxs0",
+     "subnets": [
+          {
+{% if podman_subnet_ipv4 is defined %}
+               "subnet": "{{ podman_subnet_ipv4|ansible.utils.ipaddr('net') }}",
+               "gateway": "{{ podman_subnet_ipv4|ansible.utils.ipmath(1) }}"
+{% else %}
+               "subnet": "10.89.0.0/24",
+               "gateway": "10.89.0.1"
+{% endif %}
+          },
+          {
+{% if podman_subnet_ipv6 is defined %}
+               "subnet": "{{ podman_subnet_ipv6|ansible.utils.ipaddr('net') }}",
+               "gateway": "{{ podman_subnet_ipv6|ansible.utils.ipmath(1) }}"
+{% else %}
+               "subnet": "2400::/64",
+               "gateway": "2400::1"
+{% endif %}
+          }
+     ],
+{% if podman_enable_ipv6 is defined and podman_enable_ipv6 %}
+     "ipv6_enabled": true,
+{% else %}
+     "ipv6_enabled": false,
+{% endif %}
+     "internal": false,
+     "dns_enabled": true,
+     "ipam_options": {
+          "driver": "host-local"
+     }
+}
