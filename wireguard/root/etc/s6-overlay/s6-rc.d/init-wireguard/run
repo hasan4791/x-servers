@@ -1,20 +1,6 @@
 #!/usr/bin/with-contenv bash
 # shellcheck shell=bash
 
-get_ipv6_address() {
-	for idx in {2..65535}; do
-		n=$(printf "%x\n" "$idx")
-		PROPOSED_IPV6="${INTERFACE_IPV6}::$n"
-		if ! grep -q -R "${PROPOSED_IPV6}" /config/peer*/*.conf 2>/dev/null && ([ -z "${ORIG_INTERFACE_IPV6}" ] || ! grep -q -R "${ORIG_INTERFACE_IPV6}::$n" /config/peer*/*.conf 2>/dev/null); then
-			CLIENT_IPV6="${PROPOSED_IPV6}"
-			break
-		elif [[ $idx -eq 65535 ]]; then
-			echo "**** No free IPv6 found ****"
-			exit 1
-		fi
-	done
-}
-
 generate_confs() {
 	umask 077
 	mkdir -p /config/server
@@ -26,7 +12,7 @@ generate_confs() {
 $(cat /config/templates/server.conf)
 
 DUDE"
-	if [ -n "$IPV6" ] || [ "$IPV6" = "true" ]; then
+	if [ -n "$IPV6" ] && [ "${IPV6,,}" = "true" ]; then
 		sed -i 's/PostUp_IPv6/PostUp/g' /config/wg0.conf
 		sed -i 's/PostDown_IPv6/PostDown/g' /config/wg0.conf
 	else
@@ -55,12 +41,10 @@ DUDE"
 				if [ -n "${ORIG_INTERFACE}" ] && [ "${INTERFACE}" != "${ORIG_INTERFACE}" ]; then
 					CLIENT_IPV4="${CLIENT_IPV4//${ORIG_INTERFACE}/${INTERFACE}}"
 				fi
-				if [ -n "$IPV6" ] || [ "$IPV6" = "true" ]; then
+				if [ -n "$IPV6" ] && [ "${IPV6,,}" = "true" ]; then
 					CLIENT_IPV6=$(grep "Address" "/config/${PEER_ID}/${PEER_ID}.conf" | awk '{print $NF}' | cut -d',' -f2)
 					if [ -n "${ORIG_INTERFACE_IPV6}" ] && [ "${INTERFACE_IPV6}" != "${ORIG_INTERFACE_IPV6}" ]; then
 						CLIENT_IPV6="${CLIENT_IPV6//${ORIG_INTERFACE_IPV6}/${INTERFACE_IPV6}}"
-					else
-						get_ipv6_address
 					fi
 				fi
 			else
@@ -74,11 +58,21 @@ DUDE"
 						exit 1
 					fi
 				done
-				if [ -n "$IPV6" ] || [ "$IPV6" = "true" ]; then
-					get_ipv6_address
+				if [ -n "$IPV6" ] && [ "${IPV6,,}" = "true" ]; then
+					for idx in {2..65535}; do
+						n=$(printf "%x\n" "$idx")
+						PROPOSED_IPV6="${INTERFACE_IPV6}::$n"
+						if ! grep -q -R "${PROPOSED_IPV6}" /config/peer*/*.conf 2>/dev/null && ([ -z "${ORIG_INTERFACE_IPV6}" ] || ! grep -q -R "${ORIG_INTERFACE_IPV6}::$n" /config/peer*/*.conf 2>/dev/null); then
+							CLIENT_IPV6="${PROPOSED_IPV6}"
+							break
+						elif [[ $idx -eq 65535 ]]; then
+							echo "**** No free IPv6 found ****"
+							exit 1
+						fi
+					done
 				fi
 			fi
-			if [ -n "$IPV6" ] || [ "$IPV6" = "true" ]; then
+			if [ -n "$IPV6" ] && [ "${IPV6,,}" = "true" ]; then
 				CLIENT_IP="${CLIENT_IPV4},${CLIENT_IPV6}"
 				ALLOWED_IP="${CLIENT_IPV4}/32,${CLIENT_IPV6}/128"
 			else
@@ -223,7 +217,7 @@ if ip link add dev test type wireguard; then
 		INTERNAL_SUBNET_IPV6=${INTERNAL_SUBNET_IPV6:-2401::0}
 		echo "**** Internal subnet IPv6 is set to $INTERNAL_SUBNET_IPV6 ****"
 		INTERFACE_IPV6=$(echo "$INTERNAL_SUBNET_IPV6" | awk 'BEGIN{FS=OFS="::"} NF--')
-		if [ -n "$IPV6" ] || [ "$IPV6" = "true" ]; then
+		if [ -n "$IPV6" ] && [ "${IPV6,,}" = "true" ]; then
 			SERVER_IP="${INTERFACE}.1,${INTERFACE_IPV6}::1"
 		else
 			SERVER_IP="${INTERFACE}.1"
@@ -251,7 +245,7 @@ if ip link add dev test type wireguard; then
 			else
 				# Update default interface in iptable rules
 				DEFAULT_INTERFACE="$(ip route | grep "default" | awk '{print $5}')"
-				if [ -n "$IPV6" ] || [ "$IPV6" = "true" ]; then
+				if [ -n "$IPV6" ] && [ "${IPV6,,}" = "true" ]; then
 					IPTABLE="ip6tables"
 				else
 					IPTABLE="iptables"

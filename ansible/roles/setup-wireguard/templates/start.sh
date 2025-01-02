@@ -128,9 +128,9 @@ podman run -d \
 {% else %}
     -e PERSISTENTKEEPALIVE_PEERS="all" \
 {% endif %}
-{% if wg_server_port is defined %}
-	-p {{ wg_server_port }}:51820/udp \
-	-p [::]:{{ wg_server_port }}:51820/udp \
+{% if wg_server_host_port is defined %}
+	-p {{ wg_server_host_port }}:51820/udp \
+	-p [::]:{{ wg_server_host_port }}:51820/udp \
 {% else %}
 	-p 51820:51820/udp \
 	-p [::]:51820:51820/udp \

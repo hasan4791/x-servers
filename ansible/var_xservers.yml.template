@@ -117,11 +117,13 @@ wg_mode: "server"
 # Enable/Disable IPv6 support in wireguard
 # IPv6 support must be enabled in podman
 wg_enable_ipv6: true
-# Wireguard server URL/IP
+# Wireguard external server URL/IP
 # 'auto' - Auto resolve to external public IP
 wg_server_url: auto
-# Wireguard server port
+# Wireguard external server port
 wg_server_port: 51820
+# Wireguard server port exposed on host
+wg_server_host_port: 51820
 # List of Wireguard peer names
 # Either numbers or alpha numeric strings
 # New peers must be added in the last
