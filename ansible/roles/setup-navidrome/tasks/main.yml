@@ -1,0 +1,51 @@
+---
+- name: Setup navidrome directories & files
+  include_role:
+    name: common
+    tasks_from: xserver_init
+  vars:
+    xserver_name: "navidrome"
+
+- name: "Copy navidrome config to the data directory"
+  template:
+    src: navidrome.toml.j2
+    dest: "{{ xserver_data }}/x-servers-data/navidrome/config/navidrome.toml"
+    mode: 0644
+  register: task_status
+  become: true
+  until: task_status is successful
+  retries: "{{ task_retries | int }}"
+  delay: "{{ task_delay | int }}"
+  when: xserver_force_update|bool or nd_force_update|bool
+
+- name: Check navidrome root/rootless mode
+  set_fact:
+    nd_rootless: true
+  when: xserver_rootless|bool or nd_rootless|bool
+
+- name: Check navidrome force update
+  set_fact:
+    nd_force_update: true
+  when: xserver_force_update|bool or nd_force_update|bool
+
+- name: Setup navidrome root container
+  include_role:
+    name: common
+    tasks_from: root_containers
+  vars:
+    xserver_name: "navidrome"
+    xserver_image: "{{ xserver_navidrome }}"
+    xs_rootless: "{{ nd_rootless }}"
+    xs_force_update: "{{ nd_force_update }}"
+  when: not nd_rootless|bool
+
+- name: Setup navidrome rootless container
+  include_role:
+    name: common
+    tasks_from: rootless_containers
+  vars:
+    xserver_name: "navidrome"
+    xserver_image: "{{ xserver_navidrome }}"
+    xs_rootless: "{{ nd_rootless }}"
+    xs_force_update: "{{ nd_force_update }}"
+  when: nd_rootless|bool

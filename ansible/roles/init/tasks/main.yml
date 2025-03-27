@@ -1,4 +1,7 @@
 ---
+- name: Include x-servers config file
+  include_vars: "{{ xs_config_file }}"
+
 - name: Check host deps are updated
   stat:
     path: ~/.xs_host_done

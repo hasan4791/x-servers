@@ -4,4 +4,8 @@
 **/*.key
 **/*.pem
 **/var_*.yml
+**/var_*.yml_*
 **/*.swp
+**/**/*rsa
+**/**/*ed25519
+**/**/*ecdsa
