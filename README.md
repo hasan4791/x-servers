@@ -6,6 +6,7 @@ Collection of my Personal Servers inspired from [linuxserver.io](https://www.lin
 ## Supported Servers
 1. Wireguard
 2. Openvpn-AS
+3. Navidrome
 
 ## Base container image
 Ubuntu 22.04
@@ -32,23 +33,25 @@ Podman
 
 To deploy this project on x86 hosts
 
-1. Create ansible container image
+1. Create ansible container image of specific architecture(amd64/arm64)
 
 ```bash
  cd x-servers
- ./build.sh "amd64" "baseimage-ubuntu ."
+ ./build.sh "ARCH" "baseimage-ubuntu ."
  ./start.sh
- ansible-playbook -i <path_to_inventory_file>, setup-xserver.yml -u <non-root-user>
 ```
 2. Create ansible inventory file with target host details
 3. Copy & Update xserver configs. Refer [here](https://github.com/hasan4791/x-servers/blob/main/ansible/var_xservers.yml.template) for detailed information about configs
 ```bash
-cp var_xserver.yml.template var_xserver.yml
-vi var_xserver.yml
+cp var_xservers.yml.template var_xservers.yml
+    OR
+cp var_xservers.yml.template <custom_file_name>.yml
 ```
 4. Run ansible playbook
 ```bash
-ansible-playbook -i <path_to_inventory_file>, setup-xserver.yml -u <non-root-user>
+ansible-playbook -i <path_to_inventory_file> setup-xserver.yml -u <non-root-user>
+    OR
+ansible-playbook -i <path_to_inventory_file> setup-xserver.yml -u <non-root-user> --extra-vars "xs_config_file=<custom_file_name>.yml"
 ```
 
 Currently shell scripts are used for deployment which in future can be moved to kubernetes based resources like deploy/pod yaml.

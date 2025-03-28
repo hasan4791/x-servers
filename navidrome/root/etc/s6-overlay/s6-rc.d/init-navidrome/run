@@ -1,0 +1,7 @@
+#!/usr/bin/with-contenv bash
+#shellcheck shell=bash
+
+# Update directory permission
+shopt -s extglob
+chown -R xuser:xuser "${XS_APP}"
+chown -R xuser:xuser "${XS_CONFIG}"/!(navidrome.toml)

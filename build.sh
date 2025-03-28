@@ -7,10 +7,12 @@ BUILD_ARCH=$1
 BUILD_SERVERS=$2
 
 #Build arguments
+ANSIBLE_CORE_VERSION="2.16.2"
 S6_OVERLAY_VERSION=$(curl -sX GET "https://api.github.com/repos/just-containers/s6-overlay/releases/latest" |
 	awk '/tag_name/{print $4;exit}' FS='[""]' | awk '{print substr($1,2); }')
-ANSIBLE_CORE_VERSION="2.16.2"
 COREDNS_VERSION=$(curl -sX GET "https://api.github.com/repos/coredns/coredns/releases/latest" |
+	awk '/tag_name/{print $4;exit}' FS='[""]' | awk '{print substr($1,2); }')
+NAVIDROME_VERSION=$(curl -sX GET "https://api.github.com/repos/navidrome/navidrome/releases/latest" |
 	awk '/tag_name/{print $4;exit}' FS='[""]' | awk '{print substr($1,2); }')
 
 XSERVER_DIRS=("baseimage-ubuntu" "openvpn-as" "wireguard")
@@ -20,6 +22,7 @@ declare -A XSERVER_IMG
 XSERVER_IMG["baseimage-ubuntu"]="xs-baseimage-ubuntu:22.04"
 XSERVER_IMG["openvpn-as"]="xs-openvpn-as:latest"
 XSERVER_IMG["wireguard"]="xs-wireguard:latest"
+XSERVER_IMG["navidrome"]="xs-navidrome:latest"
 XSERVER_IMG["."]="xs-ansible-core:latest"
 
 if [ "$BUILD_ARCH" == "arm64" ]; then
@@ -45,6 +48,7 @@ for server in ${BUILD_SERVERS}; do
 		--build-arg ARCH="${TARGET_ARCH}" \
 		--build-arg ANSIBLE_CORE_VERSION="${ANSIBLE_CORE_VERSION}" \
 		--build-arg COREDNS_VERSION="${COREDNS_VERSION}" \
+		--build-arg NAVIDROME_VERSION="${NAVIDROME_VERSION}" \
 		-t "${XSERVER_REGISTRY}"/"${XSERVER_IMG[$server]}" \
 		-f "$server"/Containerfile \
 		"$server"/.

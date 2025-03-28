@@ -96,7 +96,7 @@
   ignore_errors: true
   when: xs_rootless_container|bool
 
-- name: Build image if not exists
+- name: Build image if not exists - Rootless
   command:
     cmd: ./build.sh "{{ xserver_target_arch }}" "baseimage-ubuntu"
     chdir: "{{ xserver_root }}/x-servers"

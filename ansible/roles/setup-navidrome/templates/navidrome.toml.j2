@@ -1,0 +1,9 @@
+{% if nd_loglevel is defined %}
+LogLevel = '{{ nd_loglevel }}'
+{% endif %}
+{% if nd_baseurl is defined %}
+BaseUrl = '{{ nd_baseurl }}'
+{% endif %}
+MusicFolder = '/music'
+DataFolder = '/config'
+EnableInsightsCollector = 'false'

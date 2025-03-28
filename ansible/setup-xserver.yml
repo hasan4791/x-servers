@@ -6,8 +6,7 @@
       xs_host_update: true
       xs_root_container: false
       xs_rootless_container: false
-  vars_files:
-    - var_xservers.yml
+      xs_config_file: "var_xservers.yml"
   roles:
     - role: init
     # Run this role as privileged user
@@ -20,6 +19,8 @@
       when: xserver_install == "all" or "openvpn-as" in xserver_install
     - role: setup-wireguard
       when: xserver_install == "all" or "wireguard" in xserver_install
+    - role: setup-navidrome
+      when: xserver_install == "all" or "navidrome" in xserver_install
     - role: setup-cronjob
       when: xserver_install != "none"
     - cleanup

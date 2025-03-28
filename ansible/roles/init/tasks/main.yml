@@ -1,4 +1,7 @@
 ---
+- name: Include x-servers config file
+  include_vars: "{{ xs_config_file }}"
+
 - name: Check host deps are updated
   stat:
     path: ~/.xs_host_done
@@ -42,12 +45,12 @@
 - name: Check force update
   set_fact:
     bs_force_update: true
-  when: xserver_force_update|bool or ov_force_update|bool or wg_force_update|bool
+  when: xserver_force_update|bool or ov_force_update|bool or wg_force_update|bool or nd_force_update|bool
 
 - name: Check rootless deployment
   set_fact:
     xs_rootless_container: true
-  when: xserver_rootless|bool or wg_rootless|bool or ov_rootless|bool
+  when: xserver_rootless|bool or wg_rootless|bool or ov_rootless|bool or nd_rootless|bool
 
 - name: Check rootful deployment
   set_fact:
