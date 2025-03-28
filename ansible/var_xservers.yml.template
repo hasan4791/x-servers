@@ -29,8 +29,9 @@ xserver_data: "/home/dir"
 # Supported servers
 # 1. openvpn-as
 # 2. wireguard
-# 3. all
-xserver_install: "all"
+# 3. Navidrome
+# 4. all
+xserver_install: ""
 # Architecture of target host
 # Supported arch
 # 1. amd64
@@ -41,6 +42,7 @@ xserver_target_arch: ""
 xserver_baseimage: "localhost/xs-baseimage-ubuntu:22.04"
 xserver_wireguard: "localhost/xs-wireguard:latest"
 xserver_openvpnas: "localhost/xs-openvpn-as:latest"
+xserver_navidrome: "localhost/xs-navidrome:latest"
 # Slack URL to push weekly updates
 # about host & container status
 xserver_slack_url: ""
@@ -133,3 +135,19 @@ wg_log_confs: false
 wg_keepalive_peers: "all"
 # For detailed explanation, refer here
 # https://github.com/linuxserver/docker-wireguard/blob/master/README.md
+
+# 3. Navidrome Configs
+# ====================
+# Force update Navidrome server
+nd_force_update: false
+# Deploy Navidrome server as rootless container
+nd_rootless: false
+# Timezone config for Navidrome server
+nd_timezone: "Asia/Kolkata"
+# Loglevel error/warn/info/debug/trace
+#nd_loglevel: "debug"
+# Base URL to configure Navidrome behind a proxy
+#nd_baseurl: "NAVIDROME_URL"
+# Path to media directory to mount in container
+# Its always mounted as read only directory
+nd_mediafolder: "path/to/media/directory"

@@ -27,7 +27,10 @@ ENV DEBIAN_FRONTEND="noninteractive" \
     LANG="en_US.UTF-8" \
     TERM="xterm" \
     S6_CMD_WAIT_FOR_SERVICES_MAXTIME="0" \
-    S6_VERBOSITY=1
+    S6_VERBOSITY=1 \
+    XS_APP="/app" \
+    XS_CONFIG="/config" \
+    XS_DEFAULTS="/defaults"
 
 RUN \
   echo "**** create xuser user and make our folders ****" && \
