@@ -24,9 +24,9 @@ DUDE"
 			else
 				PEER_ID="peer_${i}"
 			fi
+			umask 077
 			mkdir -p "/config/${PEER_ID}"
 			if [ ! -f "/config/${PEER_ID}/privatekey-${PEER_ID}" ]; then
-				umask 077
 				wg genkey | tee "/config/${PEER_ID}/privatekey-${PEER_ID}" | wg pubkey >"/config/${PEER_ID}/publickey-${PEER_ID}"
 				wg genpsk >"/config/${PEER_ID}/presharedkey-${PEER_ID}"
 			fi
@@ -78,16 +78,33 @@ DUDE
 				cat <<DUDE >>/config/wg0.conf
 AllowedIPs = ${CLIENT_IP}/32,${!SERVER_ALLOWEDIPS}
 DUDE
+				# This is required for Site2Site VPN Configuration
+				for ip in ${!SERVER_ALLOWEDIPS//,/ }; do
+					for rule in {PostUp,PostDown}; do
+						DEF_RULE="$(grep "$rule" </config/templates/peer-s2s.conf | head -n 1)"
+						POST_RULE=${DEF_RULE//__HOMENET__/${ip}}
+						sed -i -e "/^#$rule/i ${POST_RULE}" "/config/${PEER_ID}/${PEER_ID}.conf"
+					done
+				done
+				for rule in {PostUp,PostDown}; do
+					DEF_RULE="$(grep "$rule" </config/templates/peer-s2s.conf | head -n 2 | tail -n 1)"
+					sed -i -e "/^#$rule/i ${DEF_RULE}" "/config/${PEER_ID}/${PEER_ID}.conf"
+				done
 			else
 				cat <<DUDE >>/config/wg0.conf
 AllowedIPs = ${CLIENT_IP}/32
 DUDE
 			fi
+			sed -i -e "/#PostUp/d" "/config/${PEER_ID}/${PEER_ID}.conf"
+			sed -i -e "/#PostDown/d" "/config/${PEER_ID}/${PEER_ID}.conf"
 			# add PersistentKeepalive if the peer is specified
 			if [[ -n "${PERSISTENTKEEPALIVE_PEERS_ARRAY}" ]] && ([[ "${PERSISTENTKEEPALIVE_PEERS_ARRAY[0]}" = "all" ]] || printf '%s\0' "${PERSISTENTKEEPALIVE_PEERS_ARRAY[@]}" | grep -Fxqz -- "${i}"); then
 				cat <<DUDE >>/config/wg0.conf
 PersistentKeepalive = 25
 
+DUDE
+				cat <<DUDE >>/config/${PEER_ID}/${PEER_ID}.conf
+PersistentKeepalive = 25
 DUDE
 			else
 				cat <<DUDE >>/config/wg0.conf
@@ -131,10 +148,9 @@ if ip link add dev test type wireguard; then
 	mkdir -p /etc/wireguard
 	ln -s /config/wg0.conf /etc/wireguard/wg0.conf
 	# prepare templates
-	[[ ! -f /config/templates/server.conf ]] &&
-		cp /defaults/server.conf /config/templates/server.conf
-	[[ ! -f /config/templates/peer.conf ]] &&
-		cp /defaults/peer.conf /config/templates/peer.conf
+	cp /defaults/server.conf /config/templates/server.conf
+	cp /defaults/peer.conf /config/templates/peer.conf
+	cp /defaults/peer-s2s.conf /config/templates/peer-s2s.conf
 	# add preshared key to user templates (backwards compatibility)
 	if ! grep -q 'PresharedKey' /config/templates/peer.conf; then
 		sed -i 's|^Endpoint|PresharedKey = \$\(cat /config/\${PEER_ID}/presharedkey-\${PEER_ID}\)\nEndpoint|' /config/templates/peer.conf
@@ -190,6 +206,17 @@ if ip link add dev test type wireguard; then
 				sed -i -e "s/PostUp.*/${DEF_POST_UP_RULE}/g" /config/wg0.conf
 				sed -i -e "s/PostDown.*/${DEF_POST_DOWN_RULE}/g" /config/wg0.conf
 				sed -i -e "s/eth+/${DEFAULT_INTERFACE}/g" /config/wg0.conf
+				for i in $(find -L /config -name peer_*_postup.sh -o -name peer_*_postdown.sh);
+				do
+					if [[ "$i" = *postup.sh ]]; then
+						DEF_RULE="$(grep "PostUp" </config/templates/peer-s2s.conf | head -n 2 | tail -n 1)"
+					else
+						DEF_RULE="$(grep "PostUp" </config/templates/peer-s2s.conf | head -n 2 | tail -n 1)"
+					fi
+					MATCH_RULE=${DEF_RULE//eth+/.*.}
+					POST_RULE=${DEF_RULE//eth+/${DEFAULT_INTERFACE}}
+					sed -i -e "s/${MATCH_RULE}/${POST_RULE}/g" "$i"
+				done
 				echo "**** No changes to parameters. Existing configs are used. ****"
 			fi
 		fi
@@ -198,6 +225,15 @@ if ip link add dev test type wireguard; then
 		if [ ! -f /config/wg0.conf ]; then
 			echo "**** No client conf found. Provide your own client conf as \"/config/wg0.conf\" and restart the container. ****"
 			sleep infinity
+		else
+			# Update default interface in iptable rules
+			DEFAULT_INTERFACE="$(ip route | grep "default" | awk '{print $5}')"
+			for rule in {PostUp,PostDown}; do
+				DEF_RULE="$(grep "$rule" </config/templates/peer-s2s.conf | head -n 2 | tail -n 1)"
+				MATCH_RULE=${DEF_RULE//eth+/.*.}
+				POST_RULE=${DEF_RULE//eth+/${DEFAULT_INTERFACE}}
+				sed -i -e "s/${MATCH_RULE}/${POST_RULE}/g" "/config/wg0.conf"
+			done
 		fi
 		USE_COREDNS="${USE_COREDNS,,}"
 		printf %s "${USE_COREDNS:-false}" >/run/s6/container_environment/USE_COREDNS
