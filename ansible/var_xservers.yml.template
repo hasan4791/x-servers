@@ -143,6 +143,7 @@ wg_internal_subnet_ipv6: 2401::/64
 # through VPN connection
 wg_allowed_ips:
   - 0.0.0.0/0
+  - ::/0
 # List of IP ranges that server should allow the peers
 # to reach. Used for Site-to-site VPN configuration
 wg_server_allowed_ips:

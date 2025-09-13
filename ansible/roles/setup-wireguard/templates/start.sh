@@ -112,7 +112,11 @@ podman run -d \
 	{{- comma() }}{{ ip|ansible.utils.ipaddr('net') -}}
 {% endfor %} \
 {% else %}
+{% if wg_enable_ipv6 is defined and wg_enable_ipv6|bool %}
+	-e ALLOWEDIPS=0.0.0.0/0,::/0 \
+{% else %}
 	-e ALLOWEDIPS=0.0.0.0/0 \
+{% endif %}
 {% endif %}
 {% if wg_server_allowed_ips is defined %}
 {% for peer,ips in wg_server_allowed_ips.items() %}
@@ -130,10 +134,14 @@ podman run -d \
 {% endif %}
 {% if wg_server_host_port is defined %}
 	-p {{ wg_server_host_port }}:51820/udp \
+{% if wg_enable_ipv6 is defined and wg_enable_ipv6|bool %}
 	-p [::]:{{ wg_server_host_port }}:51820/udp \
+{% endif %}
 {% else %}
 	-p 51820:51820/udp \
+{% if wg_enable_ipv6 is defined and wg_enable_ipv6|bool %}
 	-p [::]:51820:51820/udp \
+{% endif %}
 {% endif %}
 {% endif %}
 {% if wg_log_confs is defined %}

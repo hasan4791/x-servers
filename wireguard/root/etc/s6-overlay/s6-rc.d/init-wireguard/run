@@ -19,9 +19,6 @@ DUDE"
 		sed -i '/PostUp_IPv6/d' /config/wg0.conf
 		sed -i '/PostDown_IPv6/d' /config/wg0.conf
 	fi
-	# Update default interface in iptable rules
-	DEFAULT_INTERFACE="$(ip route | grep "default" | awk '{print $5}')"
-	sed -i -e "s/eth+/${DEFAULT_INTERFACE}/g" /config/wg0.conf
 	for i in "${PEERS_ARRAY[@]}"; do
 		if [[ ! "${i}" =~ ^[[:alnum:]]+$ ]]; then
 			echo "**** Peer ${i} contains non-alphanumeric characters and thus will be skipped. No config for peer ${i} will be generated. ****"
@@ -223,7 +220,7 @@ if ip link add dev test type wireguard; then
 		else
 			SERVER_IP="${INTERFACE}.1"
 		fi
-		ALLOWEDIPS=${ALLOWEDIPS:-0.0.0.0/0, ::/0}
+		ALLOWEDIPS=${ALLOWEDIPS:-0.0.0.0/0,::/0}
 		echo "**** AllowedIPs for peers $ALLOWEDIPS ****"
 		if [ -z "$PEERDNS" ] || [ "$PEERDNS" = "auto" ]; then
 			PEERDNS="${SERVER_IP}"
@@ -244,36 +241,6 @@ if ip link add dev test type wireguard; then
 				generate_confs
 				save_vars
 			else
-				# Update default interface in iptable rules
-				DEFAULT_INTERFACE="$(ip route | grep "default" | awk '{print $5}')"
-				DEF_POST_UP_RULE="$(cat /config/templates/server.conf | grep PostUp)"
-				DEF_POST_DOWN_RULE="$(cat /config/templates/server.conf | grep PostDown)"
-				sed -i -e "s/PostUp.*/${DEF_POST_UP_RULE}/g" /config/wg0.conf
-				sed -i -e "s/PostDown.*/${DEF_POST_DOWN_RULE}/g" /config/wg0.conf
-				sed -i -e "s/eth+/${DEFAULT_INTERFACE}/g" /config/wg0.conf
-				for i in $(find -L /config -name peer_*_postup.sh -o -name peer_*_postdown.sh);
-				do
-					if [[ "$i" = *postup.sh ]]; then
-						DEF_RULE="$(grep "PostUp" </config/templates/peer-s2s.conf | head -n 2 | tail -n 1)"
-					else
-						DEF_RULE="$(grep "PostUp" </config/templates/peer-s2s.conf | head -n 2 | tail -n 1)"
-					fi
-					MATCH_RULE=${DEF_RULE//eth+/.*.}
-					POST_RULE=${DEF_RULE//eth+/${DEFAULT_INTERFACE}}
-					sed -i -e "s/${MATCH_RULE}/${POST_RULE}/g" "$i"
-				done
-				if [ -n "$IPV6" ] && [ "${IPV6,,}" = "true" ]; then
-					IPTABLE="ip6tables"
-				else
-					IPTABLE="iptables"
-				fi
-				DEF_RULE="$IPTABLE -t nat -A POSTROUTING -o eth+ -j MASQUERADE;"
-				MATCH_UP_RULE=${DEF_RULE//eth+/.*.}
-				POST_UP_RULE=${DEF_RULE//eth+/${DEFAULT_INTERFACE}}
-				MATCH_DOWN_RULE=${MATCH_UP_RULE//-A/-D}
-				POST_DOWN_RULE=${POST_UP_RULE//-A/-D}
-				sed -i "s/${MATCH_UP_RULE}/${POST_UP_RULE}/g" /config/wg0.conf
-				sed -i "s/${MATCH_DOWN_RULE}/${POST_DOWN_RULE}/g" /config/wg0.conf
 				echo "**** No changes to parameters. Existing configs are used. ****"
 			fi
 		fi
@@ -282,15 +249,6 @@ if ip link add dev test type wireguard; then
 		if [ ! -f /config/wg0.conf ]; then
 			echo "**** No client conf found. Provide your own client conf as \"/config/wg0.conf\" and restart the container. ****"
 			sleep infinity
-		else
-			# Update default interface in iptable rules
-			DEFAULT_INTERFACE="$(ip route | grep "default" | awk '{print $5}')"
-			for rule in {PostUp,PostDown}; do
-				DEF_RULE="$(grep "$rule" </config/templates/peer-s2s.conf | head -n 2 | tail -n 1)"
-				MATCH_RULE=${DEF_RULE//eth+/.*.}
-				POST_RULE=${DEF_RULE//eth+/${DEFAULT_INTERFACE}}
-				sed -i -e "s/${MATCH_RULE}/${POST_RULE}/g" "/config/wg0.conf"
-			done
 		fi
 		USE_COREDNS="${USE_COREDNS,,}"
 		printf %s "${USE_COREDNS:-false}" >/run/s6/container_environment/USE_COREDNS
