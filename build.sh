@@ -14,6 +14,8 @@ COREDNS_VERSION=$(curl -sX GET "https://api.github.com/repos/coredns/coredns/rel
 	awk '/tag_name/{print $4;exit}' FS='[""]' | awk '{print substr($1,2); }')
 NAVIDROME_VERSION=$(curl -sX GET "https://api.github.com/repos/navidrome/navidrome/releases/latest" |
 	awk '/tag_name/{print $4;exit}' FS='[""]' | awk '{print substr($1,2); }')
+TAILSCALE_VERSION=$(curl -sX GET "https://api.github.com/repos/tailscale/tailscale/releases/latest" |
+	awk '/tag_name/{print $4;exit}' FS='[""]' | awk '{print substr($1,2); }')
 
 XSERVER_DIRS=("baseimage-ubuntu" "openvpn-as" "wireguard")
 XSERVER_REGISTRY="localhost"
@@ -23,6 +25,7 @@ XSERVER_IMG["baseimage-ubuntu"]="xs-baseimage-ubuntu:22.04"
 XSERVER_IMG["openvpn-as"]="xs-openvpn-as:latest"
 XSERVER_IMG["wireguard"]="xs-wireguard:latest"
 XSERVER_IMG["navidrome"]="xs-navidrome:latest"
+XSERVER_IMG["tailscale"]="xs-tailscale:latest"
 XSERVER_IMG["."]="xs-ansible-core:latest"
 
 if [ "$BUILD_ARCH" == "arm64" ]; then
@@ -49,6 +52,7 @@ for server in ${BUILD_SERVERS}; do
 		--build-arg ANSIBLE_CORE_VERSION="${ANSIBLE_CORE_VERSION}" \
 		--build-arg COREDNS_VERSION="${COREDNS_VERSION}" \
 		--build-arg NAVIDROME_VERSION="${NAVIDROME_VERSION}" \
+		--build-arg TAILSCALE_VERSION="${TAILSCALE_VERSION}" \
 		-t "${XSERVER_REGISTRY}"/"${XSERVER_IMG[$server]}" \
 		-f "$server"/Containerfile \
 		"$server"/.

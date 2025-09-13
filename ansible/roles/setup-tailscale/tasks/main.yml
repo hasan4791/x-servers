@@ -1,0 +1,39 @@
+---
+- name: Setup tailscale directories & files
+  include_role:
+    name: common
+    tasks_from: xserver_init
+  vars:
+    xserver_name: "tailscale"
+
+- name: Check tailscale root/rootless mode
+  set_fact:
+    ts_rootless: true
+  when: xserver_rootless|bool or ts_rootless|bool
+
+- name: Check tailscale force update
+  set_fact:
+    ts_force_update: true
+  when: xserver_force_update|bool or ts_force_update|bool
+
+- name: Setup tailscale root container
+  include_role:
+    name: common
+    tasks_from: root_containers
+  vars:
+    xserver_name: "tailscale"
+    xserver_image: "{{ xserver_tailscale }}"
+    xs_rootless: "{{ ts_rootless }}"
+    xs_force_update: "{{ ts_force_update }}"
+  when: not ts_rootless|bool
+
+- name: Setup tailscale rootless container
+  include_role:
+    name: common
+    tasks_from: rootless_containers
+  vars:
+    xserver_name: "tailscale"
+    xserver_image: "{{ xserver_tailscale }}"
+    xs_rootless: "{{ ts_rootless }}"
+    xs_force_update: "{{ ts_force_update }}"
+  when: ts_rootless|bool

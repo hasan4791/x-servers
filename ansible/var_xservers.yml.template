@@ -30,7 +30,8 @@ xserver_data: "/home/dir"
 # 1. openvpn-as
 # 2. wireguard
 # 3. Navidrome
-# 4. all
+# 4. Tailscale
+# 5. all
 xserver_install: ""
 # Architecture of target host
 # Supported arch
@@ -43,6 +44,7 @@ xserver_baseimage: "localhost/xs-baseimage-ubuntu:22.04"
 xserver_wireguard: "localhost/xs-wireguard:latest"
 xserver_openvpnas: "localhost/xs-openvpn-as:latest"
 xserver_navidrome: "localhost/xs-navidrome:latest"
+xserver_tailscale: "localhost/xs-tailscale:latest"
 # Slack URL to push weekly updates
 # about host & container status
 xserver_slack_url: ""
@@ -174,3 +176,17 @@ nd_timezone: "Asia/Kolkata"
 # Path to media directory to mount in container
 # Its always mounted as read only directory
 nd_mediafolder: "path/to/media/directory"
+
+# 4. Tailscale Configs
+# ====================
+# Force update Tailscale server
+ts_force_update: false
+# Deploy Tailscale server as rootless container
+ts_rootless: false
+# Timezone config for Tailscale server
+ts_timezone: "Asia/Kolkata"
+# Enable/Disable IPv6 support in tailscale
+# IPv6 support must be enabled in podman
+ts_enable_ipv6: true
+# Tailscale user auth key
+ts_auth_key: "tskey-auth-here"
