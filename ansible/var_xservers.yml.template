@@ -65,6 +65,21 @@ xserver_container_non_root_group: "xuser"
 # UID of the non-root user on target host
 xserver_container_non_root_id: "5000"
 
+# Podman Configs
+# =====================
+# Use Podman Custom Network configuration for
+# dual stack container applications
+podman_custom_network: true
+# Parameter to enable/disable IPv6 in custom network
+# Defaults to "false"
+podman_enable_ipv6: true
+# Podman container's IPv4 subnet range
+# Defaults to "10.89.1.0/24"
+podman_subnet_ipv4: 10.89.1.0/24
+# Podman container's IPv6 subnet range
+# Defaults to "2400::/64"
+podman_subnet_ipv6: 2400::/64
+
 # 1. Openvpn-AS Configs
 # =====================
 # Force update openvpn-as server
@@ -99,11 +114,16 @@ wg_timezone: "Asia/Kolkata"
 # 2. client
 # Wireguard running mode
 wg_mode: "server"
-# Wireguard server URL/IP
+# Enable/Disable IPv6 support in wireguard
+# IPv6 support must be enabled in podman
+wg_enable_ipv6: true
+# Wireguard external server URL/IP
 # 'auto' - Auto resolve to external public IP
 wg_server_url: auto
-# Wireguard server/client port
+# Wireguard external server port
 wg_server_port: 51820
+# Wireguard server port exposed on host
+wg_server_host_port: 51820
 # List of Wireguard peer names
 # Either numbers or alpha numeric strings
 # New peers must be added in the last
@@ -114,13 +134,16 @@ wg_peers:
 # 'auto' - User target host's DNS
 wg_peer_dns:
   - auto
-# Internal Subnet CIDRs for wireguard clients
-# and server. Defaults to "172.32.1.0"
+# Internal Subnet CIDRs for wireguard clients & server.
+# IPv4 Defaults to "172.32.1.0"
 wg_internal_subnet: 172.32.1.0
+# IPv6 Defaults to "2401::/64"
+wg_internal_subnet_ipv6: 2401::/64
 # List of IP ranges that peers will be able to reach
 # through VPN connection
 wg_allowed_ips:
   - 0.0.0.0/0
+  - ::/0
 # List of IP ranges that server should allow the peers
 # to reach. Used for Site-to-site VPN configuration
 wg_server_allowed_ips:
