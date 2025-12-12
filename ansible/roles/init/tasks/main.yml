@@ -60,4 +60,4 @@
 - name: Check IPv6 support
   set_fact:
     xs_ipv6: true
-  when: podman_enable_ipv6|bool and wg_enable_ipv6|bool
+  when: podman_enable_ipv6|bool and (wg_enable_ipv6|bool or ts_enable_ipv6|bool)

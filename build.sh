@@ -17,15 +17,17 @@ NAVIDROME_VERSION=$(curl -sX GET "https://api.github.com/repos/navidrome/navidro
 TAILSCALE_VERSION=$(curl -sX GET "https://api.github.com/repos/tailscale/tailscale/releases/latest" |
 	awk '/tag_name/{print $4;exit}' FS='[""]' | awk '{print substr($1,2); }')
 
-XSERVER_DIRS=("baseimage-ubuntu" "openvpn-as" "wireguard")
+XSERVER_DIRS=("baseimage-ubuntu" "openvpn-as" "wireguard" "navidrome" "tailscale")
 XSERVER_REGISTRY="localhost"
 #shellcheck disable=SC2034
 declare -A XSERVER_IMG
-XSERVER_IMG["baseimage-ubuntu"]="xs-baseimage-ubuntu:22.04"
-XSERVER_IMG["openvpn-as"]="xs-openvpn-as:latest"
-XSERVER_IMG["wireguard"]="xs-wireguard:latest"
-XSERVER_IMG["navidrome"]="xs-navidrome:latest"
-XSERVER_IMG["tailscale"]="xs-tailscale:latest"
+for dir in "${XSERVER_DIRS[@]}"; do
+	tag="latest"
+	if [[ "$dir" = *"ubuntu"* ]]; then
+		tag="22.04"
+	fi
+	XSERVER_IMG["$dir"]="xs-$dir:$tag"
+done
 XSERVER_IMG["."]="xs-ansible-core:latest"
 
 if [ "$BUILD_ARCH" == "arm64" ]; then
