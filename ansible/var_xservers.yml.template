@@ -190,3 +190,13 @@ ts_timezone: "Asia/Kolkata"
 ts_enable_ipv6: true
 # Tailscale user auth key
 ts_auth_key: "tskey-auth-here"
+# Tailscale extra args
+ts_extra_args: "--advertise-exit-node --accept-routes --hostname=<your_hostname> --accept-dns"
+# Set custom MTU
+#ts_set_mtu: 1280
+# Enable peer relay port on contaier
+ts_peer_relay_port: 40000
+# Publish peer relay port outside container
+#ts_peer_relay_port_publish: 40000
+# Enable peer relay endpoints
+ts_peer_relay_endpoints: "ip1:port1,ip2:port2"

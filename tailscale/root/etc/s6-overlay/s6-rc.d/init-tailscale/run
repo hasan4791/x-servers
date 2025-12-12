@@ -1,6 +1,16 @@
 #!/usr/bin/with-contenv bash
 # shellcheck shell=bash
 
+#Start init
+mkdir -p "${XS_CONFIG}"/coredns
+
+# set up CoreDNS
+USE_COREDNS="${USE_COREDNS,,}"
+printf %s "${USE_COREDNS:-true}" >/run/s6/container_environment/USE_COREDNS
+
+[[ ! -f /config/coredns/Corefile ]] &&
+    cp /defaults/Corefile /config/coredns/Corefile
+
 # Update directory permission
 chown -R xuser:xuser "${XS_APP}"
 chmod +x "${XS_APP}"

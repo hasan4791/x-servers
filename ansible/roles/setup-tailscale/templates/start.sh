@@ -46,10 +46,10 @@ fi
 podman run -d \
 	--name="${CONTAINER_NAME}" \
 	--cap-add=NET_ADMIN \
+	--device /dev/net/tun \
 	-h "${CONTAINER_NAME}" \
 	-e PUID="${CONTAINER_USER}" \
 	-e PGID="${CONTAINER_GROUP}" \
-	--device /dev/net/tun:/dev/net/tun \
 {% if ts_enable_ipv6 is defined and ts_enable_ipv6|bool %}
 	--network=podman-dual-stack \
 	--sysctl=net.ipv6.conf.all.forwarding=1 \
@@ -60,11 +60,31 @@ podman run -d \
 	-e TZ=Asia/Kolkata \
 {% endif %}
 	-e TS_AUTHKEY={{ ts_auth_key }} \
-	-e TS_EXTRA_ARGS=--advertise-exit-node \
-	-e TS_ACCEPT_DNS=true \
+	-e TS_EXTRA_ARGS="{{ ts_extra_args }}" \
 	-e TS_USERSPACE=false \
 	-e TS_STATE_DIR=/config \
 	-e TS_ENABLE_HEALTH_CHECK=true \
+{% if ts_set_mtu is defined %}
+	-e TS_DEBUG_MTU={{ ts_set_mtu }} \
+{% endif %}
+{% if ts_peer_relay_endpoints is defined %}
+	-e XS_PEER_RELAY_ENDPOINTS="{{ ts_peer_relay_endpoints }}" \
+{% endif %}
+{% if ts_peer_relay_port is defined and ts_peer_relay_port_publish is defined %}
+	-e XS_PEER_RELAY_PORT={{ ts_peer_relay_port }} \
+	-p {{ ts_peer_relay_port_publish }}:{{ ts_peer_relay_port }}/udp \
+{% if ts_enable_ipv6 is defined and ts_enable_ipv6|bool %}
+	-p [::]:{{ ts_peer_relay_port_publish }}:{{ ts_peer_relay_port }}/udp \
+{% endif %}
+{% elif ts_peer_relay_port is defined %}
+	-p {{ ts_peer_relay_port }}:{{ ts_peer_relay_port }}/udp \
+{% if ts_enable_ipv6 is defined and ts_enable_ipv6|bool %}
+	-p [::]:{{ ts_peer_relay_port }}:{{ ts_peer_relay_port }}/udp \
+{% endif %}
+{% else %}
+	-p 40000:40000/udp \
+	-p [::]:40000:40000/udp \
+{% endif %}
 	-v "${CONFIG_PATH}"/config:/config:Z \
 	--restart always \
 	localhost/xs-tailscale:latest
