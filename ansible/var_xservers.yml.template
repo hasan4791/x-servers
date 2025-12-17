@@ -45,6 +45,7 @@ xserver_wireguard: "localhost/xs-wireguard:latest"
 xserver_openvpnas: "localhost/xs-openvpn-as:latest"
 xserver_navidrome: "localhost/xs-navidrome:latest"
 xserver_tailscale: "localhost/xs-tailscale:latest"
+xserver_adguardhome: "localhost/xs-adguard-home:latest"
 # Slack URL to push weekly updates
 # about host & container status
 xserver_slack_url: ""
@@ -200,3 +201,15 @@ ts_peer_relay_port: 40000
 #ts_peer_relay_port_publish: 40000
 # Enable peer relay endpoints
 ts_peer_relay_endpoints: "ip1:port1,ip2:port2"
+
+# 4. Adguard Home Configs
+# ====================
+# Force update Tailscale server
+adg_force_update: false
+# Deploy Tailscale server as rootless container
+adg_rootless: false
+# Timezone config for Tailscale server
+adg_timezone: "Asia/Kolkata"
+# Enable/Disable IPv6 support in tailscale
+# IPv6 support must be enabled in podman
+adg_enable_ipv6: true

@@ -1,0 +1,28 @@
+#!/usr/bin/with-contenv bash
+#shellcheck shell=bash
+
+# Update directory permission
+chmod +x "${XS_APP}"
+chown -R xuser:xuser "${XS_APP}"
+
+# First time initialization
+if [[ ! -f "${XS_CONFIG}"/AdGuardHome.yaml ]]; then
+    echo "Running as root user - First time init..."
+    "${XS_APP}"/AdGuardHome/AdGuardHome --no-check-update -c "${XS_CONFIG}"/AdGuardHome.yaml -w "${XS_CONFIG}" &
+    PID="$!"
+    DONE=true
+    while ${DONE} ; do
+        echo "checking..."
+        if [[ -f "${XS_CONFIG}"/AdGuardHome.yaml ]]; then
+            kill "${PID}"
+            wait "${PID}"
+            DONE=false
+        else
+            sleep 30
+        fi
+    done
+    echo "First time init - Done"
+fi
+
+# Update directory permission
+chown -R xuser:xuser "${XS_CONFIG}"

@@ -16,8 +16,10 @@ NAVIDROME_VERSION=$(curl -sX GET "https://api.github.com/repos/navidrome/navidro
 	awk '/tag_name/{print $4;exit}' FS='[""]' | awk '{print substr($1,2); }')
 TAILSCALE_VERSION=$(curl -sX GET "https://api.github.com/repos/tailscale/tailscale/releases/latest" |
 	awk '/tag_name/{print $4;exit}' FS='[""]' | awk '{print substr($1,2); }')
+ADGUARDHOME_VERSION=$(curl -sX GET "https://api.github.com/repos/AdguardTeam/AdGuardHome/releases/latest" |
+	awk '/tag_name/{print $4;exit}' FS='[""]' | awk '{print substr($1,2); }')
 
-XSERVER_DIRS=("baseimage-ubuntu" "openvpn-as" "wireguard" "navidrome" "tailscale")
+XSERVER_DIRS=("baseimage-ubuntu" "openvpn-as" "wireguard" "navidrome" "tailscale" "adguard-home")
 XSERVER_REGISTRY="localhost"
 #shellcheck disable=SC2034
 declare -A XSERVER_IMG
@@ -55,6 +57,7 @@ for server in ${BUILD_SERVERS}; do
 		--build-arg COREDNS_VERSION="${COREDNS_VERSION}" \
 		--build-arg NAVIDROME_VERSION="${NAVIDROME_VERSION}" \
 		--build-arg TAILSCALE_VERSION="${TAILSCALE_VERSION}" \
+		--build-arg ADGUARDHOME_VERSION="${ADGUARDHOME_VERSION}" \
 		-t "${XSERVER_REGISTRY}"/"${XSERVER_IMG[$server]}" \
 		-f "$server"/Containerfile \
 		"$server"/.

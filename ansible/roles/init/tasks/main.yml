@@ -45,12 +45,12 @@
 - name: Check force update
   set_fact:
     bs_force_update: true
-  when: xserver_force_update|bool or ov_force_update|bool or wg_force_update|bool or nd_force_update|bool
+  when: xserver_force_update|bool or ov_force_update|bool or wg_force_update|bool or nd_force_update|bool or adg_force_update|bool
 
 - name: Check rootless deployment
   set_fact:
     xs_rootless_container: true
-  when: xserver_rootless|bool or wg_rootless|bool or ov_rootless|bool or nd_rootless|bool
+  when: xserver_rootless|bool or wg_rootless|bool or ov_rootless|bool or nd_rootless|bool or adg_rootless|bool
 
 - name: Check rootful deployment
   set_fact:
@@ -60,4 +60,4 @@
 - name: Check IPv6 support
   set_fact:
     xs_ipv6: true
-  when: podman_enable_ipv6|bool and (wg_enable_ipv6|bool or ts_enable_ipv6|bool)
+  when: podman_enable_ipv6|bool and (wg_enable_ipv6|bool or ts_enable_ipv6|bool or adg_enable_ipv6)
