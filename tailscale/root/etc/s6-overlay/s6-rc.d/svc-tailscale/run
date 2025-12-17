@@ -1,0 +1,16 @@
+#!/usr/bin/with-contenv bash
+# shellcheck shell=bash
+
+PORT=9002
+if [[ -n ${TS_LOCAL_ADDR_PORT} ]]; then
+	if [[ "${TS_LOCAL_ADDR_PORT}" =~ [0-9] ]]; then
+		PORT="${TS_LOCAL_ADDR_PORT}"
+	else
+		PORT=$(echo "${TS_LOCAL_ADDR_PORT}" | cut -d':' -f2)
+	fi
+fi
+
+exec \
+	s6-notifyoncheck -d -n 300 -w 1000 -c "redirfd -w 1 /dev/null curl -s http://localhost:${PORT}/healthz" \
+	cd /app \
+	/app/containerboot

@@ -1,0 +1,14 @@
+#!/usr/bin/with-contenv bash
+# shellcheck shell=bash
+
+if [[ ! -z ${XS_PEER_RELAY_PORT} && ! -z ${XS_PEER_RELAY_ENDPOINTS} ]]; then
+    exec \
+        s6-svlisten -R /run/service/svc-tailscale "" \
+        /bin/bash -c "echo \"Running tailscale set...\" && tailscale set --relay-server-port=\"${XS_PEER_RELAY_PORT}\" --relay-server-static-endpoints=\"${XS_PEER_RELAY_ENDPOINTS}\""
+elif [[ ! -z ${XS_PEER_RELAY_PORT} ]]; then
+    exec \
+        s6-svlisten -R /run/service/svc-tailscale "" \
+        /bin/bash -c "echo \"Running tailscale set...\" && tailscale set --relay-server-port=\"${XS_PEER_RELAY_PORT}\""
+else
+    sleep infinity
+fi
