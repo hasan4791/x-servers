@@ -1,0 +1,4 @@
+---
+task_retries: 10
+task_delay: 10
+service_name: "adguard-home"

@@ -1,0 +1,39 @@
+---
+- name: "Setup {{ service_name }} directories & files"
+  include_role:
+    name: common
+    tasks_from: xserver_init
+  vars:
+    xserver_name: "{{ service_name }}"
+
+- name: "Check {{ service_name }} root/rootless mode"
+  set_fact:
+    ts_rootless: true
+  when: xserver_rootless|bool or adg_rootless|bool
+
+- name: "Check {{ service_name }} force update"
+  set_fact:
+    ts_force_update: true
+  when: xserver_force_update|bool or adg_force_update|bool
+
+- name: "Setup {{ service_name }} root container"
+  include_role:
+    name: common
+    tasks_from: root_containers
+  vars:
+    xserver_name: "{{ service_name }}"
+    xserver_image: "{{ xserver_adguardhome }}"
+    xs_rootless: "{{ adg_rootless }}"
+    xs_force_update: "{{ adg_force_update }}"
+  when: not adg_rootless|bool
+
+- name: "Setup {{ service_name }} rootless container"
+  include_role:
+    name: common
+    tasks_from: rootless_containers
+  vars:
+    xserver_name: "{{ service_name }}"
+    xserver_image: "{{ xserver_adguardhome }}"
+    xs_rootless: "{{ adg_rootless }}"
+    xs_force_update: "{{ adg_force_update }}"
+  when: adg_rootless|bool
